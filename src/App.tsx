@@ -174,6 +174,8 @@ export default function App() {
     dispatch({ type: 'submitAnswer', question: currentQuestion });
   }
 
+  const showDevTools = import.meta.env.DEV;
+
   return (
     <main className="app-shell">
       <aside className="sidebar" aria-label="게임 진행 정보">
@@ -232,6 +234,27 @@ export default function App() {
             본편 {TOTAL_MAIN_QUESTIONS}문항, 보너스 {BONUS_QUESTION_COUNT}문항
           </span>
         </div>
+
+        {showDevTools ? (
+          <div className="dev-tools" aria-label="개발 QA 도구">
+            <strong>개발 QA</strong>
+            <button
+              type="button"
+              onClick={() => dispatch({ type: 'debugJumpToFinalBoss' })}
+            >
+              최종 보스 바로가기
+            </button>
+            <button
+              type="button"
+              onClick={() => dispatch({ type: 'debugOpenBonus' })}
+            >
+              보너스 바로가기
+            </button>
+            <button type="button" onClick={() => dispatch({ type: 'restart' })}>
+              QA 초기화
+            </button>
+          </div>
+        ) : null}
       </aside>
 
       <section className="play-area" aria-label="퀴즈 플레이">

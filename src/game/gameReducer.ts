@@ -10,7 +10,9 @@ export type GameAction =
   | { type: 'submitAnswer'; question: Question }
   | { type: 'goNext' }
   | { type: 'enterBonus' }
-  | { type: 'restart' };
+  | { type: 'restart' }
+  | { type: 'debugJumpToFinalBoss' }
+  | { type: 'debugOpenBonus' };
 
 export function createInitialGameState(): GameState {
   return {
@@ -171,6 +173,19 @@ export function gameReducer(
       });
     case 'restart':
       return createInitialGameState();
+    case 'debugJumpToFinalBoss':
+      return {
+        ...createInitialGameState(),
+        stageNumber: FINAL_BOSS_STAGE,
+        questionIndex: QUESTIONS_PER_STAGE - 1,
+      };
+    case 'debugOpenBonus':
+      return {
+        ...createInitialGameState(),
+        stageNumber: FINAL_BOSS_STAGE,
+        phase: 'bonus',
+        unlockedBonus: true,
+      };
     default:
       return state;
   }

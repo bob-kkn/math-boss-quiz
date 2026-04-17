@@ -38,6 +38,18 @@ describe('App UI', () => {
     expect(screen.getByRole('button', { name: '다음 문제' })).toBeInTheDocument();
   });
 
+  it('exposes dev-only QA shortcuts in the test/dev environment', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: '최종 보스 바로가기' }));
+    expect(screen.getByRole('heading', { name: 'Stage 13' })).toBeInTheDocument();
+    expect(screen.getByText('보스전 결과')).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: '보너스 바로가기' }));
+    expect(screen.getByRole('heading', { name: 'Bonus' })).toBeInTheDocument();
+    expect(screen.getAllByText('보너스 레벨').length).toBeGreaterThan(0);
+  });
+
   it('renders numeric input questions', () => {
     const onSelect = vi.fn<(answer: PlayerAnswer) => void>();
 
