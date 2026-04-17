@@ -232,19 +232,26 @@ export default function App() {
           </div>
         </div>
 
-        <ol className="stage-list" aria-label="전체 스테이지">
-          {stageMap.map((stage) => (
-            <li
-              className={`stage-item ${stage.status}`}
-              key={stage.stageNumber}
-            >
-              <span>{stage.label}</span>
-              <small>
-                {stage.gradeLabel} · {stage.hasFinalBoss ? '최종 보스' : stage.topic}
-              </small>
-            </li>
-          ))}
-        </ol>
+        <section className="stage-panel" aria-labelledby="stage-panel-title">
+          <div className="stage-panel-header">
+            <strong id="stage-panel-title">스테이지 진행</strong>
+            <span>13단계</span>
+          </div>
+          <ol className="stage-list" aria-label="전체 스테이지">
+            {stageMap.map((stage) => (
+              <li
+                className={`stage-item ${stage.status}`}
+                key={stage.stageNumber}
+              >
+                <span>{stage.label}</span>
+                <small>
+                  {stage.gradeLabel} ·{' '}
+                  {stage.hasFinalBoss ? '최종 보스' : stage.topic}
+                </small>
+              </li>
+            ))}
+          </ol>
+        </section>
 
         <div className="future-note">
           <strong>확정 구조</strong>

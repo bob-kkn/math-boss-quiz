@@ -39,6 +39,8 @@ describe('App UI', () => {
     render(<App />);
 
     expect(screen.getByText('4지선다')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '스테이지 진행' })).toBeInTheDocument();
+    expect(screen.getByLabelText('전체 스테이지')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '제출' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '다음 문제' })).toBeInTheDocument();
   });

@@ -133,12 +133,34 @@ h2 {
   transition: width 180ms ease;
 }
 
+.stage-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.stage-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stage-panel-header span {
+  color: #d8d8d8;
+  font-size: 0.9rem;
+}
+
 .stage-list {
   display: grid;
   gap: 8px;
+  max-height: min(42vh, 520px);
   margin: 0;
   padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
   list-style: none;
+  scrollbar-color: #f7c948 #3a3a3a;
 }
 
 .stage-item {
@@ -416,6 +438,7 @@ h2 {
 
   .stage-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 260px;
   }
 
   .play-area {
@@ -434,9 +457,13 @@ h2 {
   }
 
   .stat-grid,
-  .stage-list,
   .choices {
     grid-template-columns: 1fr;
+  }
+
+  .stage-list {
+    grid-template-columns: 1fr;
+    max-height: 230px;
   }
 
   .boss-strip,
