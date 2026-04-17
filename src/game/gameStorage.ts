@@ -1,0 +1,147 @@
+import {
+  BONUS_QUESTION_COUNT,
+  FINAL_BOSS_STAGE,
+  QUESTIONS_PER_STAGE,
+} from './stageConfig';
+import type { GamePhase, GameState, PlayerAnswer } from './types';
+
+const STORAGE_KEY = 'math-boss-quiz:game-state';
+const STORAGE_VERSION = 1;
+
+interface SavedGamePayload {
+  version: number;
+  state: GameState;
+}
+
+const gamePhases: GamePhase[] = [
+  'main',
+  'stageCleared',
+  'gameCleared',
+  'bossFailed',
+  'bonus',
+  'bonusCleared',
+];
+
+function isBrowserStorageAvailable(): boolean {
+  return typeof window !== 'undefined' && window.localStorage !== undefined;
+}
+
+function isValidPlayerAnswer(value: unknown): value is PlayerAnswer {
+  return (
+    value === null ||
+    typeof value === 'number' ||
+    typeof value === 'string' ||
+    typeof value === 'boolean'
+  );
+}
+
+function isValidGameState(value: unknown): value is GameState {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const stageNumber = candidate.stageNumber;
+  const questionIndex = candidate.questionIndex;
+  const phase = candidate.phase;
+
+  if (
+    typeof stageNumber !== 'number' ||
+    stageNumber < 1 ||
+    stageNumber > FINAL_BOSS_STAGE
+  ) {
+    return false;
+  }
+
+  if (typeof questionIndex !== 'number' || questionIndex < 0) {
+    return false;
+  }
+
+  if (!gamePhases.includes(phase as GamePhase)) {
+    return false;
+  }
+
+  const maxQuestionIndex =
+    phase === 'bonus' || phase === 'bonusCleared'
+      ? BONUS_QUESTION_COUNT - 1
+      : QUESTIONS_PER_STAGE - 1;
+
+  if (questionIndex > maxQuestionIndex) {
+    return false;
+  }
+
+  return (
+    isValidPlayerAnswer(candidate.selectedAnswer) &&
+    typeof candidate.hasSubmitted === 'boolean' &&
+    (typeof candidate.lastAnswerCorrect === 'boolean' ||
+      candidate.lastAnswerCorrect === null) &&
+    typeof candidate.score === 'number' &&
+    candidate.score >= 0 &&
+    typeof candidate.bonusScore === 'number' &&
+    candidate.bonusScore >= 0 &&
+    typeof candidate.unlockedBonus === 'boolean'
+  );
+}
+
+function isSavedGamePayload(value: unknown): value is SavedGamePayload {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    candidate.version === STORAGE_VERSION &&
+    isValidGameState(candidate.state)
+  );
+}
+
+export function loadSavedGameState(): GameState | null {
+  if (!isBrowserStorageAvailable()) {
+    return null;
+  }
+
+  try {
+    const rawState = window.localStorage.getItem(STORAGE_KEY);
+
+    if (!rawState) {
+      return null;
+    }
+
+    const parsedState = JSON.parse(rawState) as unknown;
+
+    if (!isSavedGamePayload(parsedState)) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+
+    return parsedState.state;
+  } catch {
+    window.localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
+export function saveGameState(state: GameState): void {
+  if (!isBrowserStorageAvailable()) {
+    return;
+  }
+
+  const payload: SavedGamePayload = {
+    version: STORAGE_VERSION,
+    state,
+  };
+
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+export function clearSavedGameState(): void {
+  if (!isBrowserStorageAvailable()) {
+    return;
+  }
+
+  window.localStorage.removeItem(STORAGE_KEY);
+}
+
+export const gameStorageKey = STORAGE_KEY;
+export const gameStorageVersion = STORAGE_VERSION;

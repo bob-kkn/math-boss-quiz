@@ -1,4 +1,4 @@
-import { useMemo, useReducer } from 'react';
+import { useEffect, useMemo, useReducer } from 'react';
 import {
   BONUS_QUESTION_COUNT,
   QUESTIONS_PER_STAGE,
@@ -14,6 +14,11 @@ import {
   gameReducer,
   isAnswerCorrect,
 } from './game/gameReducer';
+import {
+  clearSavedGameState,
+  loadSavedGameState,
+  saveGameState,
+} from './game/gameStorage';
 import type { AnswerValue, GameState, PlayerAnswer, Question } from './game/types';
 
 interface AnswerControlProps {
@@ -150,7 +155,11 @@ export default function App() {
     () => generateBonusQuestions({ seed: 'math-boss-bonus' }),
     [],
   );
-  const [state, dispatch] = useReducer(gameReducer, createInitialGameState());
+  const [state, dispatch] = useReducer(
+    gameReducer,
+    undefined,
+    () => loadSavedGameState() ?? createInitialGameState(),
+  );
   const isBonusPhase =
     state.phase === 'bonus' || state.phase === 'bonusCleared';
   const activeQuestions = isBonusPhase
@@ -173,6 +182,15 @@ export default function App() {
 
     dispatch({ type: 'submitAnswer', question: currentQuestion });
   }
+
+  function resetSavedGame() {
+    clearSavedGameState();
+    dispatch({ type: 'restart' });
+  }
+
+  useEffect(() => {
+    saveGameState(state);
+  }, [state]);
 
   const showDevTools = import.meta.env.DEV;
 
@@ -235,6 +253,14 @@ export default function App() {
           </span>
         </div>
 
+        <div className="save-tools" aria-label="저장 상태">
+          <strong>자동 저장</strong>
+          <span>새로고침 후에도 현재 진행이 이어집니다.</span>
+          <button type="button" onClick={resetSavedGame}>
+            저장 초기화
+          </button>
+        </div>
+
         {showDevTools ? (
           <div className="dev-tools" aria-label="개발 QA 도구">
             <strong>개발 QA</strong>
@@ -250,7 +276,7 @@ export default function App() {
             >
               보너스 바로가기
             </button>
-            <button type="button" onClick={() => dispatch({ type: 'restart' })}>
+            <button type="button" onClick={resetSavedGame}>
               QA 초기화
             </button>
           </div>
@@ -317,7 +343,7 @@ export default function App() {
             <button
               className="primary-action"
               type="button"
-              onClick={() => dispatch({ type: 'restart' })}
+              onClick={resetSavedGame}
             >
               처음부터 다시
             </button>
@@ -335,7 +361,7 @@ export default function App() {
             <button
               className="primary-action"
               type="button"
-              onClick={() => dispatch({ type: 'restart' })}
+              onClick={resetSavedGame}
             >
               새 게임
             </button>

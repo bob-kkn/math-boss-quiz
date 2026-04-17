@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import App, { AnswerControl } from './App';
+import { gameStorageKey } from './game/gameStorage';
 import type { PlayerAnswer, Question } from './game/types';
 
 function makeQuestion(overrides: Partial<Question>): Question {
@@ -20,6 +21,10 @@ function makeQuestion(overrides: Partial<Question>): Question {
 }
 
 describe('App UI', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it('renders the stage 1 multiple choice flow', () => {
     render(<App />);
 
@@ -48,6 +53,46 @@ describe('App UI', () => {
     fireEvent.click(screen.getByRole('button', { name: '보너스 바로가기' }));
     expect(screen.getByRole('heading', { name: 'Bonus' })).toBeInTheDocument();
     expect(screen.getAllByText('보너스 레벨').length).toBeGreaterThan(0);
+  });
+
+  it('persists progress and reloads from saved state', async () => {
+    const { unmount } = render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: '최종 보스 바로가기' }));
+
+    await waitFor(() => {
+      const savedState = window.localStorage.getItem(gameStorageKey);
+      expect(savedState).toContain('"stageNumber":13');
+      expect(savedState).toContain('"questionIndex":7');
+    });
+
+    unmount();
+    render(<App />);
+
+    expect(screen.getByRole('heading', { name: 'Stage 13' })).toBeInTheDocument();
+    expect(screen.getAllByText('최종 보스').length).toBeGreaterThan(0);
+  });
+
+  it('clears saved progress when storage reset is clicked', async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: '최종 보스 바로가기' }));
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem(gameStorageKey)).toContain(
+        '"stageNumber":13',
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '저장 초기화' }));
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem(gameStorageKey)).toContain(
+        '"stageNumber":1',
+      );
+    });
+
+    expect(screen.getByRole('heading', { name: 'Stage 1' })).toBeInTheDocument();
   });
 
   it('renders numeric input questions', () => {
