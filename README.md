@@ -30,4 +30,27 @@ npm run dev
 ```bash
 npm test
 npm run build
+npm run verify:prod
 ```
+
+## 배포
+
+Vercel 배포 기준:
+
+- Framework Preset: Vite
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Install Command: `npm install`
+
+배포 전 확인:
+
+```bash
+npm test
+npm run verify:prod
+```
+
+`npm run verify:prod`는 TypeScript 검사와 Vite 프로덕션 빌드를 실행한 뒤, 개발 QA 버튼 문구가 번들에 남아 있지 않은지 확인합니다.
+
+## QA 체크리스트
+
+배포 전 [production-qa.md](docs/production-qa.md)를 기준으로 본편, 최종 보스, 보너스, 저장/이어하기, 모바일 화면을 확인합니다.
