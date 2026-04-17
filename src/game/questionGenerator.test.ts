@@ -56,4 +56,81 @@ describe('question generation', () => {
       BONUS_QUESTION_COUNT,
     );
   });
+
+  it('creates unique main question ids', () => {
+    const questionsByStage = generateAllStageQuestions({ seed: 'unique' });
+    const ids = Object.values(questionsByStage)
+      .flat()
+      .map((question) => question.id);
+
+    expect(new Set(ids).size).toBe(TOTAL_MAIN_QUESTIONS);
+  });
+
+  it('creates complete question content for every generated question', () => {
+    const mainQuestions = Object.values(
+      generateAllStageQuestions({ seed: 'content' }),
+    ).flat();
+    const bonusQuestions = generateBonusQuestions({ seed: 'content-bonus' });
+
+    [...mainQuestions, ...bonusQuestions].forEach((question) => {
+      expect(question.question.trim()).not.toBe('');
+      expect(question.explanation.trim()).not.toBe('');
+      expect(question.topic.trim()).not.toBe('');
+      expect(question.level.trim()).not.toBe('');
+    });
+  });
+
+  it('creates valid answer payloads for all answer modes', () => {
+    const questions = [
+      ...Object.values(generateAllStageQuestions({ seed: 'answers' })).flat(),
+      ...generateBonusQuestions({ seed: 'answers-bonus' }),
+    ];
+
+    questions.forEach((question) => {
+      if (question.answerMode === 'multipleChoice') {
+        expect(question.choices).toHaveLength(4);
+        expect(new Set(question.choices).size).toBe(4);
+        expect(question.choices).toContain(question.answer);
+      }
+
+      if (question.answerMode === 'numericInput') {
+        expect(typeof question.answer).toBe('number');
+      }
+
+      if (question.answerMode === 'trueFalse') {
+        expect(typeof question.answer).toBe('boolean');
+        expect(question.choices).toBeUndefined();
+      }
+    });
+  });
+
+  it('keeps lower elementary stages away from advanced notation', () => {
+    const lowerElementaryText = [2, 3]
+      .flatMap((stageNumber) =>
+        generateStageQuestions(stageNumber, {
+          seed: `lower-${stageNumber}`,
+        }),
+      )
+      .map((question) => question.question)
+      .join(' ');
+
+    expect(lowerElementaryText).not.toMatch(/÷|x\^|log|√|미분|적분|방정식/);
+  });
+
+  it('keeps high school calculus content in the final stage only', () => {
+    const highOneAndTwoText = [11, 12]
+      .flatMap((stageNumber) =>
+        generateStageQuestions(stageNumber, {
+          seed: `high-${stageNumber}`,
+        }),
+      )
+      .map((question) => `${question.topic} ${question.question}`)
+      .join(' ');
+    const highThreeText = generateStageQuestions(13, { seed: 'high-13' })
+      .map((question) => `${question.topic} ${question.question}`)
+      .join(' ');
+
+    expect(highOneAndTwoText).not.toMatch(/미분|적분|f′/);
+    expect(highThreeText).toMatch(/미분|적분|f′/);
+  });
 });
