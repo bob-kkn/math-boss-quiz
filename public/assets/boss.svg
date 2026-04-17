@@ -1,0 +1,25 @@
+<svg width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Math boss character</title>
+  <desc id="desc">A geometric boss monster with horns, a crown, and math symbols.</desc>
+  <rect width="320" height="320" rx="24" fill="#F7C948"/>
+  <path d="M68 118L36 60L104 92L68 118Z" fill="#151515"/>
+  <path d="M252 118L284 60L216 92L252 118Z" fill="#151515"/>
+  <path d="M88 66L122 96L94 112L88 66Z" fill="#E43D30"/>
+  <path d="M232 66L198 96L226 112L232 66Z" fill="#E43D30"/>
+  <path d="M112 74L136 38L160 76L184 38L208 74L196 112H124L112 74Z" fill="#151515"/>
+  <path d="M88 118C88 86.52 113.52 61 145 61H175C206.48 61 232 86.52 232 118V210C232 244.242 204.242 272 170 272H150C115.758 272 88 244.242 88 210V118Z" fill="#E43D30"/>
+  <path d="M112 206C127.5 222 192.5 222 208 206" stroke="#151515" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="130" cy="146" r="18" fill="#FFFFFF"/>
+  <circle cx="190" cy="146" r="18" fill="#FFFFFF"/>
+  <circle cx="136" cy="152" r="8" fill="#151515"/>
+  <circle cx="184" cy="152" r="8" fill="#151515"/>
+  <path d="M145 172H175" stroke="#151515" stroke-width="10" stroke-linecap="round"/>
+  <path d="M75 216L43 236L75 256" stroke="#151515" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M245 216L277 236L245 256" stroke="#151515" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M48 130H76" stroke="#29A36A" stroke-width="12" stroke-linecap="round"/>
+  <path d="M244 130H272" stroke="#29A36A" stroke-width="12" stroke-linecap="round"/>
+  <path d="M154 248H166" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+  <path d="M123 103L136 116M136 103L123 116" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+  <path d="M184 110H202" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+  <path d="M193 101V119" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+</svg>
