@@ -1,12 +1,11 @@
 import {
   BONUS_TIER_NUMBER,
-  QUESTIONS_PER_STAGE,
-  STAGES_PER_TIER,
-  TIER_COUNT,
-  TOTAL_MAIN_QUESTIONS,
+  TOTAL_GENERATED_QUESTIONS,
   createTierMap,
   getGlobalStageNumber,
+  getQuestionCountForStage,
   getStageConfig,
+  getStageCountForTier,
   getStageKey,
   getTierConfig,
   isBossStage,
@@ -98,9 +97,10 @@ function finalizeQuestion(
   draft: QuestionDraft,
   random: RandomSource,
 ): Question {
-  const boss = isBossStage(context.stageNumber);
+  const boss = isBossStage(context.tierNumber, context.stageNumber);
   const shouldGenerateChoices =
     draft.answerMode === 'multipleChoice' && draft.choices === undefined;
+  const uniqueQuestionLabel = `${context.tierLabel} ${context.stageNumber}스테이지 ${order}번`;
 
   if (shouldGenerateChoices && typeof draft.answer !== 'number') {
     throw new Error('String multiple choice questions must provide choices.');
@@ -115,7 +115,7 @@ function finalizeQuestion(
       context.stageNumber,
     ),
     order,
-    question: draft.question,
+    question: `${uniqueQuestionLabel}. ${draft.question}`,
     answerMode: draft.answerMode,
     answer: draft.answer,
     choices: shouldGenerateChoices
@@ -587,6 +587,20 @@ function bonusDrafts(context: BuildContext): QuestionDraft[] {
       explanation: '모든 경우에 대한 명제는 반례 하나로 거짓임을 보일 수 있습니다.',
       topic: '증명 감각',
     },
+    {
+      question: `난제 감각: ${n}개의 점을 모두 서로 연결하면 선분은 몇 개인가요?`,
+      answerMode: 'numericInput',
+      answer: (n * (n - 1)) / 2,
+      explanation: `서로 다른 두 점을 고르는 경우의 수이므로 ${n} x ${n - 1} ÷ 2입니다.`,
+      topic: '조합 추론',
+    },
+    {
+      question: '난제 감각: 증명이 없는 직감은 정답을 보장하지 않습니다.',
+      answerMode: 'trueFalse',
+      answer: true,
+      explanation: '수학에서는 직감보다 논리적 증명이나 반례 검사가 우선입니다.',
+      topic: '논리 검증',
+    },
   ];
 }
 
@@ -692,7 +706,7 @@ function standardDrafts(context: BuildContext): QuestionDraft[] {
 }
 
 function buildQuestionDrafts(context: BuildContext): QuestionDraft[] {
-  return isBossStage(context.stageNumber)
+  return isBossStage(context.tierNumber, context.stageNumber)
     ? bossDrafts(context)
     : standardDrafts(context);
 }
@@ -715,10 +729,11 @@ export function generateStageQuestions(
     options.seed ?? `tier-${tierNumber}-stage-${stageNumber}`,
   );
   const drafts = buildQuestionDrafts(context);
+  const questionCount = getQuestionCountForStage(tierNumber, stageNumber);
 
-  if (drafts.length !== QUESTIONS_PER_STAGE) {
+  if (drafts.length !== questionCount) {
     throw new Error(
-      `Tier ${tierNumber} stage ${stageNumber} must have ${QUESTIONS_PER_STAGE} questions.`,
+      `Tier ${tierNumber} stage ${stageNumber} must have ${questionCount} questions.`,
     );
   }
 
@@ -731,7 +746,7 @@ export function generateTierQuestions(
   tierNumber: number,
   options: GeneratorOptions = {},
 ): Record<number, Question[]> {
-  return Array.from({ length: STAGES_PER_TIER }, (_, index) => {
+  return Array.from({ length: getStageCountForTier(tierNumber) }, (_, index) => {
     const stageNumber = index + 1;
     return [
       stageNumber,
@@ -749,17 +764,18 @@ export function generateAllStageQuestions(
   options: GeneratorOptions = {},
 ): Record<string, Question[]> {
   return createTierMap().reduce<Record<string, Question[]>>((acc, tier) => {
-    Array.from({ length: STAGES_PER_TIER }, (_, index) => index + 1).forEach(
-      (stageNumber) => {
-        acc[getStageKey(tier.tierNumber, stageNumber)] = generateStageQuestions(
-          tier.tierNumber,
-          stageNumber,
-          {
-            seed: `${options.seed ?? 'all'}-${tier.tierNumber}-${stageNumber}`,
-          },
-        );
-      },
-    );
+    Array.from(
+      { length: getStageCountForTier(tier.tierNumber) },
+      (_, index) => index + 1,
+    ).forEach((stageNumber) => {
+      acc[getStageKey(tier.tierNumber, stageNumber)] = generateStageQuestions(
+        tier.tierNumber,
+        stageNumber,
+        {
+          seed: `${options.seed ?? 'all'}-${tier.tierNumber}-${stageNumber}`,
+        },
+      );
+    });
 
     return acc;
   }, {});
@@ -768,11 +784,13 @@ export function generateAllStageQuestions(
 export function generateBonusQuestions(
   options: GeneratorOptions = {},
 ): Question[] {
-  return Object.values(generateTierQuestions(BONUS_TIER_NUMBER, options)).flat();
+  return generateStageQuestions(BONUS_TIER_NUMBER, 1, {
+    seed: options.seed ?? 'bonus',
+  });
 }
 
 export function getTotalGeneratedQuestionCount(): number {
-  return TIER_COUNT * STAGES_PER_TIER * QUESTIONS_PER_STAGE;
+  return TOTAL_GENERATED_QUESTIONS;
 }
 
-export { TOTAL_MAIN_QUESTIONS };
+export { TOTAL_GENERATED_QUESTIONS };

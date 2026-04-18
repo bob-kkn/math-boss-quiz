@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useReducer } from 'react';
 import {
-  QUESTIONS_PER_STAGE,
   STAGES_PER_TIER,
   TIER_COUNT,
+  TOTAL_BONUS_QUESTIONS,
+  TOTAL_GENERATED_QUESTIONS,
   TOTAL_MAIN_QUESTIONS,
   createStageMap,
   createTierMap,
@@ -210,7 +211,7 @@ export default function App() {
         <div className="progress-block">
           <div className="progress-label">
             <span>
-              {selectedTier.label} {state.stageNumber}/{STAGES_PER_TIER}
+              {selectedTier.label} {state.stageNumber}/{stageMap.length}
             </span>
             <strong>{progressPercent}%</strong>
           </div>
@@ -240,7 +241,7 @@ export default function App() {
         <section className="stage-panel" aria-labelledby="stage-panel-title">
           <div className="stage-panel-header">
             <strong id="stage-panel-title">스테이지 진행</strong>
-            <span>10스테이지</span>
+            <span>{stageMap.length}스테이지</span>
           </div>
           <ol className="stage-list" aria-label="현재 단계 스테이지">
             {stageMap.map((stage) => (
@@ -258,8 +259,8 @@ export default function App() {
         <div className="future-note">
           <strong>확정 구조</strong>
           <span>
-            {TIER_COUNT}단계 · {STAGES_PER_TIER}스테이지씩 · 본편{' '}
-            {TOTAL_MAIN_QUESTIONS}문항
+            본편 {TIER_COUNT - 1}단계 · {STAGES_PER_TIER}스테이지씩 · 보너스{' '}
+            {TOTAL_BONUS_QUESTIONS}문항 · 전체 {TOTAL_GENERATED_QUESTIONS}문항
           </span>
         </div>
 
@@ -311,7 +312,7 @@ export default function App() {
             <p className="eyebrow">Stage Clear</p>
             <h2>{state.stageNumber}스테이지 클리어</h2>
             <p>
-              {QUESTIONS_PER_STAGE}문항을 완료했습니다. 다음 스테이지로
+              {selectedStage.questionCount}문항을 완료했습니다. 다음 스테이지로
               이동합니다.
             </p>
             <button
@@ -347,8 +348,9 @@ export default function App() {
             <p className="eyebrow">All Clear</p>
             <h2>전체 클리어</h2>
             <p>
-              {TIER_COUNT}단계, {TOTAL_MAIN_QUESTIONS}문항 여정을 모두
-              완료했습니다. 칭호: 수학 보스전 정복자
+              본편 {TOTAL_MAIN_QUESTIONS}문항과 보너스 {TOTAL_BONUS_QUESTIONS}
+              문항을 모두 완료했습니다. 전체 {TOTAL_GENERATED_QUESTIONS}문항
+              클리어. 칭호: 수학 보스전 정복자
             </p>
             <button
               className="primary-action"

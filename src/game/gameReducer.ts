@@ -1,8 +1,9 @@
 import {
   BOSS_STAGE_NUMBER,
+  FINAL_MAIN_TIER,
   FINAL_TIER,
-  QUESTIONS_PER_STAGE,
-  STAGES_PER_TIER,
+  getQuestionCountForStage,
+  getStageCountForTier,
 } from './stageConfig';
 import type { AnswerValue, GameState, PlayerAnswer, Question } from './types';
 
@@ -115,7 +116,12 @@ function goNext(state: GameState): GameState {
     return state;
   }
 
-  const isLastQuestion = state.questionIndex === QUESTIONS_PER_STAGE - 1;
+  const questionCount = getQuestionCountForStage(
+    state.tierNumber,
+    state.stageNumber,
+  );
+  const stageCount = getStageCountForTier(state.tierNumber);
+  const isLastQuestion = state.questionIndex === questionCount - 1;
 
   if (!isLastQuestion) {
     return resetQuestionState({
@@ -124,7 +130,7 @@ function goNext(state: GameState): GameState {
     });
   }
 
-  if (state.stageNumber === STAGES_PER_TIER) {
+  if (state.stageNumber === stageCount) {
     return {
       ...state,
       phase: state.tierNumber === FINAL_TIER ? 'gameCleared' : 'tierCleared',
@@ -160,7 +166,7 @@ export function gameReducer(
     case 'debugJumpToFinalBoss':
       return {
         ...createInitialGameState(),
-        tierNumber: FINAL_TIER,
+        tierNumber: FINAL_MAIN_TIER,
         stageNumber: BOSS_STAGE_NUMBER,
       };
     case 'debugOpenBonus':

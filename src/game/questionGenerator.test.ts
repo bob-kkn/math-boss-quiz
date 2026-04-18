@@ -6,9 +6,13 @@ import {
 } from './questionGenerator';
 import {
   BOSS_STAGE_NUMBER,
+  BONUS_TIER_NUMBER,
+  FINAL_MAIN_TIER,
   QUESTIONS_PER_STAGE,
   STAGES_PER_TIER,
   TIER_COUNT,
+  TOTAL_BONUS_QUESTIONS,
+  TOTAL_GENERATED_QUESTIONS,
   TOTAL_MAIN_QUESTIONS,
   createStageMap,
   createTierMap,
@@ -19,20 +23,26 @@ describe('question generation', () => {
     expect(createTierMap()).toHaveLength(TIER_COUNT);
   });
 
-  it('creates 10 stages per tier', () => {
+  it('creates 10 stages per main tier and 1 bonus stage', () => {
     expect(createStageMap(1)).toHaveLength(STAGES_PER_TIER);
+    expect(createStageMap(BONUS_TIER_NUMBER)).toHaveLength(1);
   });
 
-  it('creates 8 questions per stage', () => {
+  it('creates 8 questions per main stage and 10 bonus questions', () => {
     const questionsByStage = generateAllStageQuestions({ seed: 'test' });
 
-    Object.values(questionsByStage).forEach((questions) => {
-      expect(questions).toHaveLength(QUESTIONS_PER_STAGE);
+    Object.entries(questionsByStage).forEach(([stageKey, questions]) => {
+      expect(questions).toHaveLength(
+        stageKey === `${BONUS_TIER_NUMBER}-1`
+          ? TOTAL_BONUS_QUESTIONS
+          : QUESTIONS_PER_STAGE,
+      );
     });
   });
 
-  it('reports the full 1440-question structure', () => {
-    expect(getTotalGeneratedQuestionCount()).toBe(TOTAL_MAIN_QUESTIONS);
+  it('reports the full generated question structure', () => {
+    expect(TOTAL_MAIN_QUESTIONS).toBe(1360);
+    expect(getTotalGeneratedQuestionCount()).toBe(TOTAL_GENERATED_QUESTIONS);
   });
 
   it('marks every tenth stage as a boss stage', () => {
@@ -45,8 +55,10 @@ describe('question generation', () => {
     expect(stageTen.every((question) => question.isBoss)).toBe(true);
   });
 
-  it('creates 80 bonus tier questions', () => {
-    expect(generateBonusQuestions({ seed: 'bonus-test' })).toHaveLength(80);
+  it('creates one 10-question bonus stage', () => {
+    expect(generateBonusQuestions({ seed: 'bonus-test' })).toHaveLength(
+      TOTAL_BONUS_QUESTIONS,
+    );
   });
 
   it('creates unique main question ids', () => {
@@ -55,7 +67,16 @@ describe('question generation', () => {
       .flat()
       .map((question) => question.id);
 
-    expect(new Set(ids).size).toBe(TOTAL_MAIN_QUESTIONS);
+    expect(new Set(ids).size).toBe(TOTAL_GENERATED_QUESTIONS);
+  });
+
+  it('creates unique visible question text', () => {
+    const questions = Object.values(
+      generateAllStageQuestions({ seed: 'unique-text' }),
+    ).flat();
+    const questionText = questions.map((question) => question.question);
+
+    expect(new Set(questionText).size).toBe(TOTAL_GENERATED_QUESTIONS);
   });
 
   it('creates complete question content for every generated question', () => {
@@ -111,7 +132,15 @@ describe('question generation', () => {
 
   it('keeps university, graduate, and bonus tiers available at the end', () => {
     const tierLabels = createTierMap().map((tier) => tier.label);
+    const finalMainBoss = generateStageQuestions(
+      FINAL_MAIN_TIER,
+      BOSS_STAGE_NUMBER,
+      { seed: 'main-final-boss' },
+    );
+    const bonusStage = generateBonusQuestions({ seed: 'bonus-end' });
 
     expect(tierLabels.slice(-3)).toEqual(['대학교', '대학원', '보너스']);
+    expect(finalMainBoss.every((question) => question.isBoss)).toBe(true);
+    expect(bonusStage.every((question) => !question.isBoss)).toBe(true);
   });
 });

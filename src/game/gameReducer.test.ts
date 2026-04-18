@@ -3,8 +3,10 @@ import { generateBonusQuestions, generateStageQuestions } from './questionGenera
 import {
   BONUS_TIER_NUMBER,
   BOSS_STAGE_NUMBER,
+  FINAL_MAIN_TIER,
   FINAL_TIER,
   QUESTIONS_PER_STAGE,
+  TOTAL_BONUS_QUESTIONS,
 } from './stageConfig';
 
 describe('game reducer', () => {
@@ -121,25 +123,25 @@ describe('game reducer', () => {
     expect(next.stageNumber).toBe(1);
   });
 
-  it('clears the full game after the bonus boss stage', () => {
-    const boss = generateStageQuestions(FINAL_TIER, BOSS_STAGE_NUMBER, {
-      seed: 'final-boss',
-    })[QUESTIONS_PER_STAGE - 1];
+  it('clears the full game after the one-stage bonus level', () => {
+    const bonusQuestion = generateStageQuestions(FINAL_TIER, 1, {
+      seed: 'final-bonus',
+    })[TOTAL_BONUS_QUESTIONS - 1];
     const selected = gameReducer(
       {
         ...createInitialGameState(),
         tierNumber: FINAL_TIER,
-        stageNumber: BOSS_STAGE_NUMBER,
-        questionIndex: QUESTIONS_PER_STAGE - 1,
+        stageNumber: 1,
+        questionIndex: TOTAL_BONUS_QUESTIONS - 1,
       },
       {
         type: 'selectAnswer',
-        answer: boss.answer,
+        answer: bonusQuestion.answer,
       },
     );
     const submitted = gameReducer(selected, {
       type: 'submitAnswer',
-      question: boss,
+      question: bonusQuestion,
     });
     const cleared = gameReducer(submitted, { type: 'goNext' });
 
@@ -151,7 +153,7 @@ describe('game reducer', () => {
       type: 'debugJumpToFinalBoss',
     });
 
-    expect(jumped.tierNumber).toBe(FINAL_TIER);
+    expect(jumped.tierNumber).toBe(FINAL_MAIN_TIER);
     expect(jumped.stageNumber).toBe(BOSS_STAGE_NUMBER);
     expect(jumped.questionIndex).toBe(0);
     expect(jumped.phase).toBe('main');
@@ -166,6 +168,6 @@ describe('game reducer', () => {
     expect(opened.tierNumber).toBe(BONUS_TIER_NUMBER);
     expect(opened.stageNumber).toBe(1);
     expect(opened.phase).toBe('main');
-    expect(bonusQuestions).toHaveLength(80);
+    expect(bonusQuestions).toHaveLength(TOTAL_BONUS_QUESTIONS);
   });
 });

@@ -1,12 +1,12 @@
 import {
   FINAL_TIER,
-  QUESTIONS_PER_STAGE,
-  STAGES_PER_TIER,
+  getQuestionCountForStage,
+  getStageCountForTier,
 } from './stageConfig';
 import type { GamePhase, GameState, PlayerAnswer } from './types';
 
 const STORAGE_KEY = 'math-boss-quiz:game-state';
-const STORAGE_VERSION = 2;
+const STORAGE_VERSION = 3;
 
 interface SavedGamePayload {
   version: number;
@@ -40,16 +40,36 @@ function isValidGameState(value: unknown): value is GameState {
 
   const candidate = value as Record<string, unknown>;
 
+  if (
+    typeof candidate.tierNumber !== 'number' ||
+    candidate.tierNumber < 1 ||
+    candidate.tierNumber > FINAL_TIER ||
+    typeof candidate.stageNumber !== 'number'
+  ) {
+    return false;
+  }
+
+  let stageCount: number;
+  let questionCount: number;
+
+  try {
+    stageCount = getStageCountForTier(candidate.tierNumber);
+    questionCount = getQuestionCountForStage(
+      candidate.tierNumber,
+      candidate.stageNumber,
+    );
+  } catch {
+    return false;
+  }
+
   return (
     typeof candidate.tierNumber === 'number' &&
-    candidate.tierNumber >= 1 &&
-    candidate.tierNumber <= FINAL_TIER &&
     typeof candidate.stageNumber === 'number' &&
     candidate.stageNumber >= 1 &&
-    candidate.stageNumber <= STAGES_PER_TIER &&
+    candidate.stageNumber <= stageCount &&
     typeof candidate.questionIndex === 'number' &&
     candidate.questionIndex >= 0 &&
-    candidate.questionIndex < QUESTIONS_PER_STAGE &&
+    candidate.questionIndex < questionCount &&
     isValidPlayerAnswer(candidate.selectedAnswer) &&
     typeof candidate.hasSubmitted === 'boolean' &&
     (typeof candidate.lastAnswerCorrect === 'boolean' ||

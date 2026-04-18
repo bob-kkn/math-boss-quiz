@@ -6,6 +6,7 @@ import {
   saveGameState,
 } from './gameStorage';
 import { createInitialGameState } from './gameReducer';
+import { BONUS_TIER_NUMBER, TOTAL_BONUS_QUESTIONS } from './stageConfig';
 
 describe('game storage', () => {
   beforeEach(() => {
@@ -19,6 +20,19 @@ describe('game storage', () => {
       stageNumber: 4,
       questionIndex: 2,
       score: 17,
+    };
+
+    saveGameState(state);
+
+    expect(loadSavedGameState()).toEqual(state);
+  });
+
+  it('saves and loads the final bonus question', () => {
+    const state = {
+      ...createInitialGameState(),
+      tierNumber: BONUS_TIER_NUMBER,
+      stageNumber: 1,
+      questionIndex: TOTAL_BONUS_QUESTIONS - 1,
     };
 
     saveGameState(state);
@@ -55,6 +69,23 @@ describe('game storage', () => {
         state: {
           ...createInitialGameState(),
           tierNumber: 99,
+        },
+      }),
+    );
+
+    expect(loadSavedGameState()).toBeNull();
+    expect(window.localStorage.getItem(gameStorageKey)).toBeNull();
+  });
+
+  it('drops saved data that tries to put bonus beyond one stage', () => {
+    window.localStorage.setItem(
+      gameStorageKey,
+      JSON.stringify({
+        version: gameStorageVersion,
+        state: {
+          ...createInitialGameState(),
+          tierNumber: BONUS_TIER_NUMBER,
+          stageNumber: 2,
         },
       }),
     );

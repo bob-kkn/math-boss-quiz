@@ -53,12 +53,13 @@ describe('App UI', () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole('button', { name: '최종 보스 바로가기' }));
-    expect(screen.getByRole('heading', { name: '보너스' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '대학원' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '다음 문제' })).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: '보너스 바로가기' }));
     expect(screen.getByRole('heading', { name: '보너스' })).toBeInTheDocument();
     expect(screen.getAllByText('거의 난제').length).toBeGreaterThan(0);
+    expect(screen.getByText('1스테이지')).toBeInTheDocument();
   });
 
   it('persists progress and reloads from saved state', async () => {
@@ -68,14 +69,14 @@ describe('App UI', () => {
 
     await waitFor(() => {
       const savedState = window.localStorage.getItem(gameStorageKey);
-      expect(savedState).toContain('"tierNumber":18');
+      expect(savedState).toContain('"tierNumber":17');
       expect(savedState).toContain('"stageNumber":10');
     });
 
     unmount();
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: '보너스' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '대학원' })).toBeInTheDocument();
     expect(screen.getAllByText('보스전').length).toBeGreaterThan(0);
   });
 
@@ -86,7 +87,7 @@ describe('App UI', () => {
 
     await waitFor(() => {
       expect(window.localStorage.getItem(gameStorageKey)).toContain(
-        '"tierNumber":18',
+        '"tierNumber":17',
       );
     });
 

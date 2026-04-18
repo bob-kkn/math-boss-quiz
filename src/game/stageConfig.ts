@@ -1,11 +1,21 @@
 import type { GamePhase, ProgressStatus, StageConfig, TierConfig } from './types';
 
 export const TIER_COUNT = 18;
+export const MAIN_TIER_COUNT = TIER_COUNT - 1;
 export const STAGES_PER_TIER = 10;
+export const BONUS_STAGE_COUNT = 1;
 export const QUESTIONS_PER_STAGE = 8;
-export const TOTAL_STAGE_COUNT = TIER_COUNT * STAGES_PER_TIER;
-export const TOTAL_MAIN_QUESTIONS = TOTAL_STAGE_COUNT * QUESTIONS_PER_STAGE;
+export const BONUS_QUESTIONS_PER_STAGE = 10;
+export const TOTAL_MAIN_STAGE_COUNT = MAIN_TIER_COUNT * STAGES_PER_TIER;
+export const TOTAL_STAGE_COUNT = TOTAL_MAIN_STAGE_COUNT + BONUS_STAGE_COUNT;
+export const TOTAL_MAIN_QUESTIONS =
+  TOTAL_MAIN_STAGE_COUNT * QUESTIONS_PER_STAGE;
+export const TOTAL_BONUS_QUESTIONS =
+  BONUS_STAGE_COUNT * BONUS_QUESTIONS_PER_STAGE;
+export const TOTAL_GENERATED_QUESTIONS =
+  TOTAL_MAIN_QUESTIONS + TOTAL_BONUS_QUESTIONS;
 export const FINAL_TIER = TIER_COUNT;
+export const FINAL_MAIN_TIER = MAIN_TIER_COUNT;
 export const BOSS_STAGE_NUMBER = STAGES_PER_TIER;
 export const BONUS_TIER_NUMBER = TIER_COUNT;
 
@@ -38,11 +48,34 @@ export function getGlobalStageNumber(
   tierNumber: number,
   stageNumber: number,
 ): number {
+  if (tierNumber === BONUS_TIER_NUMBER) {
+    return TOTAL_MAIN_STAGE_COUNT + stageNumber;
+  }
+
   return (tierNumber - 1) * STAGES_PER_TIER + stageNumber;
 }
 
-export function isBossStage(stageNumber: number): boolean {
-  return stageNumber === BOSS_STAGE_NUMBER;
+export function getStageCountForTier(tierNumber: number): number {
+  return tierNumber === BONUS_TIER_NUMBER ? BONUS_STAGE_COUNT : STAGES_PER_TIER;
+}
+
+export function getQuestionCountForStage(
+  tierNumber: number,
+  stageNumber: number,
+): number {
+  const stageCount = getStageCountForTier(tierNumber);
+
+  if (stageNumber < 1 || stageNumber > stageCount) {
+    throw new Error(`Unknown stage: tier ${tierNumber}, stage ${stageNumber}`);
+  }
+
+  return tierNumber === BONUS_TIER_NUMBER
+    ? BONUS_QUESTIONS_PER_STAGE
+    : QUESTIONS_PER_STAGE;
+}
+
+export function isBossStage(tierNumber: number, stageNumber: number): boolean {
+  return tierNumber !== BONUS_TIER_NUMBER && stageNumber === BOSS_STAGE_NUMBER;
 }
 
 function getTierStatus(
@@ -108,18 +141,22 @@ export function createStageMap(
   phase: GamePhase = 'main',
 ): StageConfig[] {
   const tier = getTierConfig(tierNumber);
+  const stageCount = getStageCountForTier(tierNumber);
 
-  return Array.from({ length: STAGES_PER_TIER }, (_, index) => {
+  return Array.from({ length: stageCount }, (_, index) => {
     const stageNumber = index + 1;
-    const bossStage = isBossStage(stageNumber);
+    const bossStage = isBossStage(tierNumber, stageNumber);
 
     return {
       tierNumber,
       stageNumber,
       globalStageNumber: getGlobalStageNumber(tierNumber, stageNumber),
-      label: `${stageNumber}스테이지`,
+      label:
+        tierNumber === BONUS_TIER_NUMBER
+          ? '보너스 스테이지'
+          : `${stageNumber}스테이지`,
       topic: bossStage ? `${tier.label} 보스전` : `${tier.topic} ${stageNumber}`,
-      questionCount: QUESTIONS_PER_STAGE,
+      questionCount: getQuestionCountForStage(tierNumber, stageNumber),
       isBossStage: bossStage,
       status: getStageStatus(stageNumber, currentStageNumber, phase),
     };
