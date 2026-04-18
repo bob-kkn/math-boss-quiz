@@ -4,30 +4,34 @@ export type AnswerValue = number | string | boolean;
 
 export type PlayerAnswer = AnswerValue | null;
 
-export type GamePhase =
-  | 'main'
-  | 'stageCleared'
-  | 'gameCleared'
-  | 'bossFailed'
-  | 'bonus'
-  | 'bonusCleared';
+export type GamePhase = 'main' | 'stageCleared' | 'tierCleared' | 'gameCleared';
 
-export type StageStatus = 'completed' | 'active' | 'locked';
+export type ProgressStatus = 'completed' | 'active' | 'locked';
+
+export interface TierConfig {
+  tierNumber: number;
+  label: string;
+  topic: string;
+  status: ProgressStatus;
+  isBonusTier: boolean;
+}
 
 export interface StageConfig {
+  tierNumber: number;
   stageNumber: number;
+  globalStageNumber: number;
   label: string;
-  gradeLabel: string;
   topic: string;
   questionCount: number;
-  isFinalStage: boolean;
-  hasFinalBoss: boolean;
-  status: StageStatus;
+  isBossStage: boolean;
+  status: ProgressStatus;
 }
 
 export interface Question {
   id: string;
-  stageNumber: number | 'bonus';
+  tierNumber: number;
+  stageNumber: number;
+  globalStageNumber: number;
   order: number;
   question: string;
   answerMode: AnswerMode;
@@ -41,6 +45,7 @@ export interface Question {
 }
 
 export interface GameState {
+  tierNumber: number;
   stageNumber: number;
   questionIndex: number;
   selectedAnswer: PlayerAnswer;
@@ -48,6 +53,4 @@ export interface GameState {
   lastAnswerCorrect: boolean | null;
   phase: GamePhase;
   score: number;
-  bonusScore: number;
-  unlockedBonus: boolean;
 }

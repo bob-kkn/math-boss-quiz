@@ -150,10 +150,11 @@ h2 {
   font-size: 0.9rem;
 }
 
+.tier-list,
 .stage-list {
   display: grid;
   gap: 8px;
-  max-height: min(42vh, 520px);
+  max-height: min(30vh, 360px);
   margin: 0;
   padding: 0;
   overflow: auto;
@@ -163,6 +164,11 @@ h2 {
   scrollbar-color: #f7c948 #3a3a3a;
 }
 
+.stage-list {
+  max-height: min(24vh, 300px);
+}
+
+.tier-item,
 .stage-item {
   display: flex;
   min-height: 54px;
@@ -174,25 +180,30 @@ h2 {
   border-radius: 8px;
 }
 
+.tier-item span,
 .stage-item span {
   font-weight: 800;
 }
 
+.tier-item small,
 .stage-item small {
   color: #c9c9c9;
   text-align: right;
 }
 
+.tier-item.active,
 .stage-item.active {
   border-color: #f7c948;
   color: #f7c948;
 }
 
+.tier-item.completed,
 .stage-item.completed {
   border-color: #29a36a;
   color: #ffffff;
 }
 
+.tier-item.locked,
 .stage-item.locked {
   opacity: 0.62;
 }
@@ -441,6 +452,11 @@ h2 {
     max-height: 260px;
   }
 
+  .tier-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 260px;
+  }
+
   .play-area {
     align-content: start;
     padding: 24px;
@@ -461,6 +477,7 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .tier-list,
   .stage-list {
     grid-template-columns: 1fr;
     max-height: 230px;

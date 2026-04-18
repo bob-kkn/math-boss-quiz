@@ -1,12 +1,12 @@
 import {
-  BONUS_QUESTION_COUNT,
-  FINAL_BOSS_STAGE,
+  FINAL_TIER,
   QUESTIONS_PER_STAGE,
+  STAGES_PER_TIER,
 } from './stageConfig';
 import type { GamePhase, GameState, PlayerAnswer } from './types';
 
 const STORAGE_KEY = 'math-boss-quiz:game-state';
-const STORAGE_VERSION = 1;
+const STORAGE_VERSION = 2;
 
 interface SavedGamePayload {
   version: number;
@@ -16,10 +16,8 @@ interface SavedGamePayload {
 const gamePhases: GamePhase[] = [
   'main',
   'stageCleared',
+  'tierCleared',
   'gameCleared',
-  'bossFailed',
-  'bonus',
-  'bonusCleared',
 ];
 
 function isBrowserStorageAvailable(): boolean {
@@ -41,45 +39,24 @@ function isValidGameState(value: unknown): value is GameState {
   }
 
   const candidate = value as Record<string, unknown>;
-  const stageNumber = candidate.stageNumber;
-  const questionIndex = candidate.questionIndex;
-  const phase = candidate.phase;
-
-  if (
-    typeof stageNumber !== 'number' ||
-    stageNumber < 1 ||
-    stageNumber > FINAL_BOSS_STAGE
-  ) {
-    return false;
-  }
-
-  if (typeof questionIndex !== 'number' || questionIndex < 0) {
-    return false;
-  }
-
-  if (!gamePhases.includes(phase as GamePhase)) {
-    return false;
-  }
-
-  const maxQuestionIndex =
-    phase === 'bonus' || phase === 'bonusCleared'
-      ? BONUS_QUESTION_COUNT - 1
-      : QUESTIONS_PER_STAGE - 1;
-
-  if (questionIndex > maxQuestionIndex) {
-    return false;
-  }
 
   return (
+    typeof candidate.tierNumber === 'number' &&
+    candidate.tierNumber >= 1 &&
+    candidate.tierNumber <= FINAL_TIER &&
+    typeof candidate.stageNumber === 'number' &&
+    candidate.stageNumber >= 1 &&
+    candidate.stageNumber <= STAGES_PER_TIER &&
+    typeof candidate.questionIndex === 'number' &&
+    candidate.questionIndex >= 0 &&
+    candidate.questionIndex < QUESTIONS_PER_STAGE &&
     isValidPlayerAnswer(candidate.selectedAnswer) &&
     typeof candidate.hasSubmitted === 'boolean' &&
     (typeof candidate.lastAnswerCorrect === 'boolean' ||
       candidate.lastAnswerCorrect === null) &&
+    gamePhases.includes(candidate.phase as GamePhase) &&
     typeof candidate.score === 'number' &&
-    candidate.score >= 0 &&
-    typeof candidate.bonusScore === 'number' &&
-    candidate.bonusScore >= 0 &&
-    typeof candidate.unlockedBonus === 'boolean'
+    candidate.score >= 0
   );
 }
 

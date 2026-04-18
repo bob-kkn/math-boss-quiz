@@ -6,7 +6,9 @@ import type { PlayerAnswer, Question } from './game/types';
 function makeQuestion(overrides: Partial<Question>): Question {
   return {
     id: 'test-question',
+    tierNumber: 1,
     stageNumber: 1,
+    globalStageNumber: 1,
     order: 1,
     question: '테스트 문제',
     answerMode: 'multipleChoice',
@@ -28,7 +30,7 @@ describe('App UI', () => {
   it('renders the stage 1 multiple choice flow', () => {
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: 'Stage 1' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '아기' })).toBeInTheDocument();
     expect(screen.getByText('4지선다')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '제출' })).toBeDisabled();
   });
@@ -39,8 +41,10 @@ describe('App UI', () => {
     render(<App />);
 
     expect(screen.getByText('4지선다')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '단계 진행' })).toBeInTheDocument();
+    expect(screen.getByLabelText('전체 단계')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: '스테이지 진행' })).toBeInTheDocument();
-    expect(screen.getByLabelText('전체 스테이지')).toBeInTheDocument();
+    expect(screen.getByLabelText('현재 단계 스테이지')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '제출' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '다음 문제' })).toBeInTheDocument();
   });
@@ -49,12 +53,12 @@ describe('App UI', () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole('button', { name: '최종 보스 바로가기' }));
-    expect(screen.getByRole('heading', { name: 'Stage 13' })).toBeInTheDocument();
-    expect(screen.getByText('보스전 결과')).toBeDisabled();
+    expect(screen.getByRole('heading', { name: '보너스' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '다음 문제' })).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: '보너스 바로가기' }));
-    expect(screen.getByRole('heading', { name: 'Bonus' })).toBeInTheDocument();
-    expect(screen.getAllByText('보너스 레벨').length).toBeGreaterThan(0);
+    expect(screen.getByRole('heading', { name: '보너스' })).toBeInTheDocument();
+    expect(screen.getAllByText('거의 난제').length).toBeGreaterThan(0);
   });
 
   it('persists progress and reloads from saved state', async () => {
@@ -64,15 +68,15 @@ describe('App UI', () => {
 
     await waitFor(() => {
       const savedState = window.localStorage.getItem(gameStorageKey);
-      expect(savedState).toContain('"stageNumber":13');
-      expect(savedState).toContain('"questionIndex":7');
+      expect(savedState).toContain('"tierNumber":18');
+      expect(savedState).toContain('"stageNumber":10');
     });
 
     unmount();
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: 'Stage 13' })).toBeInTheDocument();
-    expect(screen.getAllByText('최종 보스').length).toBeGreaterThan(0);
+    expect(screen.getByRole('heading', { name: '보너스' })).toBeInTheDocument();
+    expect(screen.getAllByText('보스전').length).toBeGreaterThan(0);
   });
 
   it('clears saved progress when storage reset is clicked', async () => {
@@ -82,7 +86,7 @@ describe('App UI', () => {
 
     await waitFor(() => {
       expect(window.localStorage.getItem(gameStorageKey)).toContain(
-        '"stageNumber":13',
+        '"tierNumber":18',
       );
     });
 
@@ -94,7 +98,7 @@ describe('App UI', () => {
       );
     });
 
-    expect(screen.getByRole('heading', { name: 'Stage 1' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '아기' })).toBeInTheDocument();
   });
 
   it('renders numeric input questions', () => {

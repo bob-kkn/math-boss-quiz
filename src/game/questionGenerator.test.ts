@@ -5,17 +5,22 @@ import {
   getTotalGeneratedQuestionCount,
 } from './questionGenerator';
 import {
-  BONUS_QUESTION_COUNT,
-  FINAL_BOSS_STAGE,
+  BOSS_STAGE_NUMBER,
   QUESTIONS_PER_STAGE,
-  STAGE_COUNT,
+  STAGES_PER_TIER,
+  TIER_COUNT,
   TOTAL_MAIN_QUESTIONS,
   createStageMap,
+  createTierMap,
 } from './stageConfig';
 
 describe('question generation', () => {
-  it('creates 13 stages', () => {
-    expect(createStageMap()).toHaveLength(STAGE_COUNT);
+  it('creates 18 tiers', () => {
+    expect(createTierMap()).toHaveLength(TIER_COUNT);
+  });
+
+  it('creates 10 stages per tier', () => {
+    expect(createStageMap(1)).toHaveLength(STAGES_PER_TIER);
   });
 
   it('creates 8 questions per stage', () => {
@@ -26,35 +31,22 @@ describe('question generation', () => {
     });
   });
 
-  it('reports 104 main questions', () => {
+  it('reports the full 1440-question structure', () => {
     expect(getTotalGeneratedQuestionCount()).toBe(TOTAL_MAIN_QUESTIONS);
   });
 
-  it('marks only stage 13 question 8 as the final boss', () => {
-    const bossFlags = Array.from({ length: STAGE_COUNT }, (_, index) => {
-      const stageNumber = index + 1;
-      return generateStageQuestions(stageNumber, {
-        seed: `boss-${stageNumber}`,
-      }).map((question) => ({
-        id: question.id,
-        isBoss: question.isBoss,
-      }));
-    }).flat();
+  it('marks every tenth stage as a boss stage', () => {
+    const stageNine = generateStageQuestions(4, 9, { seed: 'not-boss' });
+    const stageTen = generateStageQuestions(4, BOSS_STAGE_NUMBER, {
+      seed: 'boss',
+    });
 
-    const bosses = bossFlags.filter((question) => question.isBoss);
-
-    expect(bosses).toEqual([
-      {
-        id: `stage-${FINAL_BOSS_STAGE}-question-${QUESTIONS_PER_STAGE}`,
-        isBoss: true,
-      },
-    ]);
+    expect(stageNine.every((question) => !question.isBoss)).toBe(true);
+    expect(stageTen.every((question) => question.isBoss)).toBe(true);
   });
 
-  it('creates 5 bonus questions', () => {
-    expect(generateBonusQuestions({ seed: 'bonus-test' })).toHaveLength(
-      BONUS_QUESTION_COUNT,
-    );
+  it('creates 80 bonus tier questions', () => {
+    expect(generateBonusQuestions({ seed: 'bonus-test' })).toHaveLength(80);
   });
 
   it('creates unique main question ids', () => {
@@ -67,12 +59,11 @@ describe('question generation', () => {
   });
 
   it('creates complete question content for every generated question', () => {
-    const mainQuestions = Object.values(
+    const questions = Object.values(
       generateAllStageQuestions({ seed: 'content' }),
     ).flat();
-    const bonusQuestions = generateBonusQuestions({ seed: 'content-bonus' });
 
-    [...mainQuestions, ...bonusQuestions].forEach((question) => {
+    questions.forEach((question) => {
       expect(question.question.trim()).not.toBe('');
       expect(question.explanation.trim()).not.toBe('');
       expect(question.topic.trim()).not.toBe('');
@@ -81,10 +72,9 @@ describe('question generation', () => {
   });
 
   it('creates valid answer payloads for all answer modes', () => {
-    const questions = [
-      ...Object.values(generateAllStageQuestions({ seed: 'answers' })).flat(),
-      ...generateBonusQuestions({ seed: 'answers-bonus' }),
-    ];
+    const questions = Object.values(
+      generateAllStageQuestions({ seed: 'answers' }),
+    ).flat();
 
     questions.forEach((question) => {
       if (question.answerMode === 'multipleChoice') {
@@ -104,33 +94,24 @@ describe('question generation', () => {
     });
   });
 
-  it('keeps lower elementary stages away from advanced notation', () => {
-    const lowerElementaryText = [2, 3]
-      .flatMap((stageNumber) =>
-        generateStageQuestions(stageNumber, {
-          seed: `lower-${stageNumber}`,
-        }),
+  it('keeps baby and kindergarten tiers away from advanced notation outside boss stages', () => {
+    const earlyText = [1, 2, 3]
+      .flatMap((tierNumber) =>
+        Array.from({ length: STAGES_PER_TIER - 1 }, (_, index) =>
+          generateStageQuestions(tierNumber, index + 1, {
+            seed: `early-${tierNumber}-${index + 1}`,
+          }),
+        ).flat(),
       )
       .map((question) => question.question)
       .join(' ');
 
-    expect(lowerElementaryText).not.toMatch(/÷|x\^|log|√|미분|적분|방정식/);
+    expect(earlyText).not.toMatch(/÷|x\^|log|√|미분|적분|방정식/);
   });
 
-  it('keeps high school calculus content in the final stage only', () => {
-    const highOneAndTwoText = [11, 12]
-      .flatMap((stageNumber) =>
-        generateStageQuestions(stageNumber, {
-          seed: `high-${stageNumber}`,
-        }),
-      )
-      .map((question) => `${question.topic} ${question.question}`)
-      .join(' ');
-    const highThreeText = generateStageQuestions(13, { seed: 'high-13' })
-      .map((question) => `${question.topic} ${question.question}`)
-      .join(' ');
+  it('keeps university, graduate, and bonus tiers available at the end', () => {
+    const tierLabels = createTierMap().map((tier) => tier.label);
 
-    expect(highOneAndTwoText).not.toMatch(/미분|적분|f′/);
-    expect(highThreeText).toMatch(/미분|적분|f′/);
+    expect(tierLabels.slice(-3)).toEqual(['대학교', '대학원', '보너스']);
   });
 });

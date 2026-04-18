@@ -1,7 +1,8 @@
 import {
-  BONUS_QUESTION_COUNT,
-  FINAL_BOSS_STAGE,
+  BOSS_STAGE_NUMBER,
+  FINAL_TIER,
   QUESTIONS_PER_STAGE,
+  STAGES_PER_TIER,
 } from './stageConfig';
 import type { AnswerValue, GameState, PlayerAnswer, Question } from './types';
 
@@ -9,13 +10,13 @@ export type GameAction =
   | { type: 'selectAnswer'; answer: PlayerAnswer }
   | { type: 'submitAnswer'; question: Question }
   | { type: 'goNext' }
-  | { type: 'enterBonus' }
   | { type: 'restart' }
   | { type: 'debugJumpToFinalBoss' }
   | { type: 'debugOpenBonus' };
 
 export function createInitialGameState(): GameState {
   return {
+    tierNumber: 1,
     stageNumber: 1,
     questionIndex: 0,
     selectedAnswer: null,
@@ -23,8 +24,6 @@ export function createInitialGameState(): GameState {
     lastAnswerCorrect: null,
     phase: 'main',
     score: 0,
-    bonusScore: 0,
-    unlockedBonus: false,
   };
 }
 
@@ -81,12 +80,7 @@ function submitAnswer(state: GameState, question: Question): GameState {
     ...state,
     hasSubmitted: true,
     lastAnswerCorrect: correct,
-    score:
-      state.phase === 'main' && correct ? state.score + 1 : state.score,
-    bonusScore:
-      state.phase === 'bonus' && correct
-        ? state.bonusScore + 1
-        : state.bonusScore,
+    score: correct ? state.score + 1 : state.score,
   };
 }
 
@@ -100,47 +94,47 @@ function goNext(state: GameState): GameState {
     });
   }
 
+  if (state.phase === 'tierCleared') {
+    if (state.tierNumber === FINAL_TIER) {
+      return {
+        ...state,
+        phase: 'gameCleared',
+      };
+    }
+
+    return resetQuestionState({
+      ...state,
+      tierNumber: state.tierNumber + 1,
+      stageNumber: 1,
+      questionIndex: 0,
+      phase: 'main',
+    });
+  }
+
   if (!state.hasSubmitted) {
     return state;
   }
 
-  if (state.phase === 'bonus') {
-    if (state.questionIndex === BONUS_QUESTION_COUNT - 1) {
-      return {
-        ...state,
-        phase: 'bonusCleared',
-      };
-    }
+  const isLastQuestion = state.questionIndex === QUESTIONS_PER_STAGE - 1;
 
+  if (!isLastQuestion) {
     return resetQuestionState({
       ...state,
       questionIndex: state.questionIndex + 1,
     });
   }
 
-  const isLastQuestion = state.questionIndex === QUESTIONS_PER_STAGE - 1;
-  const isFinalBoss =
-    state.stageNumber === FINAL_BOSS_STAGE && isLastQuestion;
-
-  if (isFinalBoss) {
+  if (state.stageNumber === STAGES_PER_TIER) {
     return {
       ...state,
-      phase: state.lastAnswerCorrect ? 'gameCleared' : 'bossFailed',
-      unlockedBonus: Boolean(state.lastAnswerCorrect),
+      phase: state.tierNumber === FINAL_TIER ? 'gameCleared' : 'tierCleared',
     };
   }
 
-  if (isLastQuestion) {
-    return {
-      ...state,
-      phase: 'stageCleared',
-    };
-  }
-
-  return resetQuestionState({
+  return {
     ...state,
-    questionIndex: state.questionIndex + 1,
-  });
+    phase: 'stageCleared',
+  };
 }
 
 export function gameReducer(
@@ -161,30 +155,19 @@ export function gameReducer(
       return submitAnswer(state, action.question);
     case 'goNext':
       return goNext(state);
-    case 'enterBonus':
-      if (!state.unlockedBonus) {
-        return state;
-      }
-
-      return resetQuestionState({
-        ...state,
-        phase: 'bonus',
-        questionIndex: 0,
-      });
     case 'restart':
       return createInitialGameState();
     case 'debugJumpToFinalBoss':
       return {
         ...createInitialGameState(),
-        stageNumber: FINAL_BOSS_STAGE,
-        questionIndex: QUESTIONS_PER_STAGE - 1,
+        tierNumber: FINAL_TIER,
+        stageNumber: BOSS_STAGE_NUMBER,
       };
     case 'debugOpenBonus':
       return {
         ...createInitialGameState(),
-        stageNumber: FINAL_BOSS_STAGE,
-        phase: 'bonus',
-        unlockedBonus: true,
+        tierNumber: FINAL_TIER,
+        stageNumber: 1,
       };
     default:
       return state;

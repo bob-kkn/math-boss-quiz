@@ -1,15 +1,15 @@
+import { createInitialGameState, gameReducer } from './gameReducer';
+import { generateBonusQuestions, generateStageQuestions } from './questionGenerator';
 import {
-  createInitialGameState,
-  gameReducer,
-} from './gameReducer';
-import {
-  generateBonusQuestions,
-  generateStageQuestions,
-} from './questionGenerator';
+  BONUS_TIER_NUMBER,
+  BOSS_STAGE_NUMBER,
+  FINAL_TIER,
+  QUESTIONS_PER_STAGE,
+} from './stageConfig';
 
 describe('game reducer', () => {
   it('increases score after a correct answer', () => {
-    const question = generateStageQuestions(1, { seed: 'score' })[0];
+    const question = generateStageQuestions(1, 1, { seed: 'score' })[0];
     const selected = gameReducer(createInitialGameState(), {
       type: 'selectAnswer',
       answer: question.answer,
@@ -24,7 +24,7 @@ describe('game reducer', () => {
   });
 
   it('keeps score after a wrong answer', () => {
-    const question = generateStageQuestions(1, { seed: 'wrong' })[0];
+    const question = generateStageQuestions(1, 1, { seed: 'wrong' })[0];
     const selected = gameReducer(createInitialGameState(), {
       type: 'selectAnswer',
       answer: '__wrong__',
@@ -46,11 +46,13 @@ describe('game reducer', () => {
   });
 
   it('clears a regular stage after its last question', () => {
-    const question = generateStageQuestions(1, { seed: 'clear' })[7];
+    const question = generateStageQuestions(1, 1, { seed: 'clear' })[
+      QUESTIONS_PER_STAGE - 1
+    ];
     const selected = gameReducer(
       {
         ...createInitialGameState(),
-        questionIndex: 7,
+        questionIndex: QUESTIONS_PER_STAGE - 1,
       },
       {
         type: 'selectAnswer',
@@ -66,13 +68,69 @@ describe('game reducer', () => {
     expect(cleared.phase).toBe('stageCleared');
   });
 
-  it('unlocks bonus after the stage 13 boss is cleared', () => {
-    const boss = generateStageQuestions(13, { seed: 'boss' })[7];
+  it('moves from a cleared stage to the next stage', () => {
+    const next = gameReducer(
+      {
+        ...createInitialGameState(),
+        phase: 'stageCleared',
+      },
+      { type: 'goNext' },
+    );
+
+    expect(next.phase).toBe('main');
+    expect(next.stageNumber).toBe(2);
+    expect(next.questionIndex).toBe(0);
+  });
+
+  it('clears a tier after its boss stage', () => {
+    const boss = generateStageQuestions(1, BOSS_STAGE_NUMBER, {
+      seed: 'tier-boss',
+    })[QUESTIONS_PER_STAGE - 1];
     const selected = gameReducer(
       {
         ...createInitialGameState(),
-        stageNumber: 13,
-        questionIndex: 7,
+        stageNumber: BOSS_STAGE_NUMBER,
+        questionIndex: QUESTIONS_PER_STAGE - 1,
+      },
+      {
+        type: 'selectAnswer',
+        answer: boss.answer,
+      },
+    );
+    const submitted = gameReducer(selected, {
+      type: 'submitAnswer',
+      question: boss,
+    });
+    const cleared = gameReducer(submitted, { type: 'goNext' });
+
+    expect(cleared.phase).toBe('tierCleared');
+  });
+
+  it('moves from a cleared tier to the next tier', () => {
+    const next = gameReducer(
+      {
+        ...createInitialGameState(),
+        stageNumber: BOSS_STAGE_NUMBER,
+        phase: 'tierCleared',
+      },
+      { type: 'goNext' },
+    );
+
+    expect(next.phase).toBe('main');
+    expect(next.tierNumber).toBe(2);
+    expect(next.stageNumber).toBe(1);
+  });
+
+  it('clears the full game after the bonus boss stage', () => {
+    const boss = generateStageQuestions(FINAL_TIER, BOSS_STAGE_NUMBER, {
+      seed: 'final-boss',
+    })[QUESTIONS_PER_STAGE - 1];
+    const selected = gameReducer(
+      {
+        ...createInitialGameState(),
+        tierNumber: FINAL_TIER,
+        stageNumber: BOSS_STAGE_NUMBER,
+        questionIndex: QUESTIONS_PER_STAGE - 1,
       },
       {
         type: 'selectAnswer',
@@ -86,63 +144,28 @@ describe('game reducer', () => {
     const cleared = gameReducer(submitted, { type: 'goNext' });
 
     expect(cleared.phase).toBe('gameCleared');
-    expect(cleared.unlockedBonus).toBe(true);
   });
 
-  it('fails the final boss when the boss answer is wrong', () => {
-    const boss = generateStageQuestions(13, { seed: 'boss-fail' })[7];
-    const selected = gameReducer(
-      {
-        ...createInitialGameState(),
-        stageNumber: 13,
-        questionIndex: 7,
-      },
-      {
-        type: 'selectAnswer',
-        answer: '__wrong__',
-      },
-    );
-    const submitted = gameReducer(selected, {
-      type: 'submitAnswer',
-      question: boss,
-    });
-    const failed = gameReducer(submitted, { type: 'goNext' });
-
-    expect(failed.phase).toBe('bossFailed');
-    expect(failed.unlockedBonus).toBe(false);
-  });
-
-  it('jumps to final boss through the debug action', () => {
+  it('jumps to the final boss stage through the debug action', () => {
     const jumped = gameReducer(createInitialGameState(), {
       type: 'debugJumpToFinalBoss',
     });
 
-    expect(jumped.stageNumber).toBe(13);
-    expect(jumped.questionIndex).toBe(7);
+    expect(jumped.tierNumber).toBe(FINAL_TIER);
+    expect(jumped.stageNumber).toBe(BOSS_STAGE_NUMBER);
+    expect(jumped.questionIndex).toBe(0);
     expect(jumped.phase).toBe('main');
   });
 
-  it('opens bonus through the debug action and clears it after five submitted answers', () => {
-    const bonusQuestions = generateBonusQuestions({ seed: 'bonus-flow' });
+  it('opens the bonus tier through the debug action', () => {
     const opened = gameReducer(createInitialGameState(), {
       type: 'debugOpenBonus',
     });
+    const bonusQuestions = generateBonusQuestions({ seed: 'bonus-flow' });
 
-    const cleared = bonusQuestions.reduce((state, question) => {
-      const selected = gameReducer(state, {
-        type: 'selectAnswer',
-        answer: question.answer,
-      });
-      const submitted = gameReducer(selected, {
-        type: 'submitAnswer',
-        question,
-      });
-
-      return gameReducer(submitted, { type: 'goNext' });
-    }, opened);
-
-    expect(opened.phase).toBe('bonus');
-    expect(cleared.phase).toBe('bonusCleared');
-    expect(cleared.bonusScore).toBe(5);
+    expect(opened.tierNumber).toBe(BONUS_TIER_NUMBER);
+    expect(opened.stageNumber).toBe(1);
+    expect(opened.phase).toBe('main');
+    expect(bonusQuestions).toHaveLength(80);
   });
 });

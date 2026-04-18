@@ -15,7 +15,8 @@ describe('game storage', () => {
   it('saves and loads a valid game state', () => {
     const state = {
       ...createInitialGameState(),
-      stageNumber: 5,
+      tierNumber: 5,
+      stageNumber: 4,
       questionIndex: 2,
       score: 17,
     };
@@ -53,7 +54,7 @@ describe('game storage', () => {
         version: gameStorageVersion,
         state: {
           ...createInitialGameState(),
-          stageNumber: 99,
+          tierNumber: 99,
         },
       }),
     );
