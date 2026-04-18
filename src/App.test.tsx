@@ -80,11 +80,21 @@ describe('App UI', () => {
   it('renders the stage 1 multiple choice flow', () => {
     render(<App />);
 
+    expect(screen.getByRole('link', { name: '퀴즈로 바로가기' })).toHaveAttribute(
+      'href',
+      '#quiz-main',
+    );
     expect(screen.getByRole('heading', { name: '아기' })).toBeInTheDocument();
     expect(screen.getByText('4지선다')).toBeInTheDocument();
     expect(screen.getByText(/^핵심 /)).toBeInTheDocument();
     expect(screen.getByText('기초')).toBeInTheDocument();
     expect(screen.getByText('콤보 0')).toBeInTheDocument();
+    expect(
+      screen.getByRole('progressbar', { name: '현재 스테이지 진행률' }),
+    ).toHaveAttribute('aria-valuenow', '0');
+    expect(
+      screen.getByText('새 게임 · 아기 1/10스테이지 · 1/8문항'),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '제출' })).toBeDisabled();
   });
 
@@ -124,6 +134,14 @@ describe('App UI', () => {
     expect(screen.getByLabelText('보스전 상태')).toBeInTheDocument();
     expect(screen.getByText('6/6')).toBeInTheDocument();
     expect(screen.getByLabelText('플레이어 체력 3')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: '보스 HP' })).toHaveAttribute(
+      'aria-valuenow',
+      '6',
+    );
+    expect(
+      screen.getByRole('progressbar', { name: '플레이어 HP' }),
+    ).toHaveAttribute('aria-valuenow', '3');
+    expect(screen.getByText(/이어하기 저장됨/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '다음 문제' })).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: '보너스 바로가기' }));
@@ -216,6 +234,15 @@ describe('App UI', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: '저장 초기화' }));
+
+    expect(
+      screen.getByText('한 번 더 누르면 진행이 삭제됩니다.'),
+    ).toBeInTheDocument();
+    expect(window.localStorage.getItem(gameStorageKey)).toContain(
+      '"tierNumber":17',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '정말 초기화' }));
 
     await waitFor(() => {
       expect(window.localStorage.getItem(gameStorageKey)).toContain(

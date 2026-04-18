@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 import {
   STAGES_PER_TIER,
   TIER_COUNT,
@@ -149,6 +149,7 @@ export default function App() {
     undefined,
     () => loadSavedGameState() ?? createInitialGameState(),
   );
+  const [isResetArmed, setIsResetArmed] = useState(false);
   const activeQuestions = useMemo(
     () =>
       generateStageQuestions(state.tierNumber, state.stageNumber, {
@@ -168,6 +169,19 @@ export default function App() {
   const currentStageResult =
     state.stageResults[getStageKey(state.tierNumber, state.stageNumber)];
   const progressPercent = getProgressPercent(state, activeQuestions.length);
+  const completedStageCount = Object.keys(state.stageResults).length;
+  const hasSavedProgress =
+    completedStageCount > 0 ||
+    state.score > 0 ||
+    state.tierNumber > 1 ||
+    state.stageNumber > 1 ||
+    state.questionIndex > 0 ||
+    state.hasSubmitted ||
+    state.phase !== 'main';
+  const progressSummary = `${selectedTier.label} ${state.stageNumber}/${stageMap.length}스테이지 · ${Math.min(
+    state.questionIndex + 1,
+    activeQuestions.length,
+  )}/${activeQuestions.length}문항`;
   const isCorrect =
     currentQuestion && state.hasSubmitted
       ? isAnswerCorrect(currentQuestion, state.selectedAnswer)
@@ -183,17 +197,35 @@ export default function App() {
 
   function resetSavedGame() {
     clearSavedGameState();
+    setIsResetArmed(false);
     dispatch({ type: 'restart' });
+  }
+
+  function requestSavedGameReset() {
+    if (!isResetArmed) {
+      setIsResetArmed(true);
+      return;
+    }
+
+    resetSavedGame();
   }
 
   useEffect(() => {
     saveGameState(state);
   }, [state]);
 
+  useEffect(() => {
+    setIsResetArmed(false);
+  }, [state.tierNumber, state.stageNumber, state.questionIndex, state.phase]);
+
   const showDevTools = import.meta.env.DEV;
 
   return (
-    <main className="app-shell">
+    <>
+      <a className="skip-link" href="#quiz-main">
+        퀴즈로 바로가기
+      </a>
+      <main className="app-shell">
       <aside className="sidebar" aria-label="게임 진행 정보">
         <div>
           <p className="eyebrow">수학 보스전</p>
@@ -229,8 +261,16 @@ export default function App() {
             </span>
             <strong>{progressPercent}%</strong>
           </div>
-          <div className="progress-track" aria-hidden="true">
+          <div
+            aria-label="현재 스테이지 진행률"
+            aria-valuemax={100}
+            aria-valuemin={0}
+            aria-valuenow={progressPercent}
+            className="progress-track"
+            role="progressbar"
+          >
             <div
+              aria-hidden="true"
               className="progress-fill"
               style={{ width: `${progressPercent}%` }}
             />
@@ -295,10 +335,21 @@ export default function App() {
 
         <div className="save-tools" aria-label="저장 상태">
           <strong>자동 저장</strong>
-          <span>새로고침 후에도 현재 진행이 이어집니다.</span>
-          <button type="button" onClick={resetSavedGame}>
-            저장 초기화
+          <span>
+            {hasSavedProgress ? '이어하기 저장됨' : '새 게임'} ·{' '}
+            {progressSummary}
+          </span>
+          <span>
+            완료 스테이지 {completedStageCount}개 · 새로고침 후에도 이어집니다.
+          </span>
+          <button type="button" onClick={requestSavedGameReset}>
+            {isResetArmed ? '정말 초기화' : '저장 초기화'}
           </button>
+          {isResetArmed ? (
+            <span className="reset-warning" role="status">
+              한 번 더 누르면 진행이 삭제됩니다.
+            </span>
+          ) : null}
         </div>
 
         {showDevTools ? (
@@ -323,7 +374,12 @@ export default function App() {
         ) : null}
       </aside>
 
-      <section className="play-area" aria-label="퀴즈 플레이">
+      <section
+        aria-label="퀴즈 플레이"
+        className="play-area"
+        id="quiz-main"
+        tabIndex={-1}
+      >
         <div className="boss-strip">
           <img src="/assets/boss.svg" alt="최종 보스" />
           <div>
@@ -345,8 +401,16 @@ export default function App() {
                   {state.bossHp}/{BOSS_MAX_HP}
                 </strong>
               </div>
-              <div className="hp-track" aria-hidden="true">
+              <div
+                aria-label="보스 HP"
+                aria-valuemax={BOSS_MAX_HP}
+                aria-valuemin={0}
+                aria-valuenow={state.bossHp}
+                className="hp-track"
+                role="progressbar"
+              >
                 <div
+                  aria-hidden="true"
                   className="hp-fill boss-hp"
                   style={{ width: `${(state.bossHp / BOSS_MAX_HP) * 100}%` }}
                 />
@@ -360,8 +424,16 @@ export default function App() {
                   {'♡'.repeat(PLAYER_MAX_HP - state.playerHp)}
                 </strong>
               </div>
-              <div className="hp-track" aria-hidden="true">
+              <div
+                aria-label="플레이어 HP"
+                aria-valuemax={PLAYER_MAX_HP}
+                aria-valuemin={0}
+                aria-valuenow={state.playerHp}
+                className="hp-track"
+                role="progressbar"
+              >
                 <div
+                  aria-hidden="true"
                   className="hp-fill player-hp"
                   style={{
                     width: `${(state.playerHp / PLAYER_MAX_HP) * 100}%`,
@@ -473,7 +545,9 @@ export default function App() {
         ) : null}
 
         {state.phase === 'main' && currentQuestion ? (
-          <article className={`question-panel ${currentQuestion.isBoss ? 'boss-panel' : ''}`}>
+          <article
+            className={`question-panel ${currentQuestion.isBoss ? 'boss-panel' : ''}`}
+          >
             <header className="question-header">
               <div>
                 <p className="eyebrow">{currentQuestion.topic}</p>
@@ -510,7 +584,7 @@ export default function App() {
               }
             />
 
-            <div className="feedback" aria-live="polite">
+            <div className="feedback" aria-live="polite" role="status">
               {state.hasSubmitted ? (
                 <>
                   <strong>{isCorrect ? '정답' : '오답'}</strong>
@@ -546,6 +620,7 @@ export default function App() {
           </article>
         ) : null}
       </section>
-    </main>
+      </main>
+    </>
   );
 }
