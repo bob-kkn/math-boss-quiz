@@ -100,7 +100,6 @@ function finalizeQuestion(
   const boss = isBossStage(context.tierNumber, context.stageNumber);
   const shouldGenerateChoices =
     draft.answerMode === 'multipleChoice' && draft.choices === undefined;
-  const uniqueQuestionLabel = `${context.tierLabel} ${context.stageNumber}스테이지 ${order}번`;
 
   if (shouldGenerateChoices && typeof draft.answer !== 'number') {
     throw new Error('String multiple choice questions must provide choices.');
@@ -115,7 +114,7 @@ function finalizeQuestion(
       context.stageNumber,
     ),
     order,
-    question: `${uniqueQuestionLabel}. ${draft.question}`,
+    question: draft.question,
     answerMode: draft.answerMode,
     answer: draft.answer,
     choices: shouldGenerateChoices
@@ -138,28 +137,28 @@ function earlyDrafts(context: BuildContext): QuestionDraft[] {
 
   return [
     {
-      question: `${base}개와 1개를 합치면 몇 개인가요?`,
+      question: `${context.tierLabel} 바구니에 ${base}개와 1개를 합치면 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: next,
       explanation: `${base} 다음 수는 ${next}입니다.`,
       topic: '수 세기',
     },
     {
-      question: `${sum}개 중 1개를 빼면 몇 개인가요?`,
+      question: `${context.tierLabel} 접시에 있는 ${sum}개 중 1개를 빼면 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: sum - 1,
       explanation: `${sum}에서 1을 빼면 ${sum - 1}입니다.`,
       topic: '빼기 감각',
     },
     {
-      question: `${next}은 ${base}보다 큽니다.`,
+      question: `${context.tierLabel} 숫자 카드에서 ${next}은 ${base}보다 큽니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: `${next}은 ${base}보다 1 큰 수입니다.`,
       topic: '크기 비교',
     },
     {
-      question: '동그라미처럼 모서리가 없는 도형은 무엇인가요?',
+      question: `${context.tierLabel} ${base}번 그림판에서 동그라미처럼 모서리가 없는 도형은 무엇인가요?`,
       answerMode: 'multipleChoice',
       answer: '원',
       choices: ['원', '삼각형', '사각형', '별'],
@@ -167,28 +166,28 @@ function earlyDrafts(context: BuildContext): QuestionDraft[] {
       topic: '모양',
     },
     {
-      question: `${base}, ${next}, ?`,
+      question: `${context.tierLabel} 규칙 카드: ${base}, ${next}, ?`,
       answerMode: 'multipleChoice',
       answer: next + 1,
       explanation: '1씩 커지는 순서입니다.',
       topic: '규칙',
     },
     {
-      question: `사탕 ${base}개를 받고 2개를 더 받았습니다. 모두 몇 개인가요?`,
+      question: `${context.tierLabel} 놀이에서 사탕 ${base}개를 받고 2개를 더 받았습니다. 모두 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: base + 2,
       explanation: `${base} + 2 = ${base + 2}입니다.`,
       topic: '생활 문제',
     },
     {
-      question: `${base + 3} 바로 앞의 수는 ${base + 2}입니다.`,
+      question: `${context.tierLabel} 숫자 길에서 ${base + 3} 바로 앞의 수는 ${base + 2}입니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: `${base + 3}보다 1 작은 수는 ${base + 2}입니다.`,
       topic: '참거짓',
     },
     {
-      question: '변이 3개인 도형은 무엇인가요?',
+      question: `${context.tierLabel} ${sum}번 도형 카드에서 변이 3개인 도형은 무엇인가요?`,
       answerMode: 'multipleChoice',
       answer: '삼각형',
       choices: ['삼각형', '사각형', '원', '육각형'],
@@ -201,9 +200,11 @@ function earlyDrafts(context: BuildContext): QuestionDraft[] {
 function elementaryDrafts(context: BuildContext): QuestionDraft[] {
   const a = context.tierNumber + context.stageNumber + 4;
   const b = Math.max(2, context.stageNumber + 2);
-  const product = Math.min(a, 12) * Math.min(b, 9);
-  const divisor = Math.min(b, 9);
-  const quotient = context.stageNumber + 3;
+  const product = a * b;
+  const divisor = b;
+  const quotient = context.tierNumber + context.stageNumber + 3;
+  const denominator = context.tierNumber + context.stageNumber + 2;
+  const sequenceStep = context.tierNumber - 1;
 
   return [
     {
@@ -221,10 +222,10 @@ function elementaryDrafts(context: BuildContext): QuestionDraft[] {
       topic: '뺄셈',
     },
     {
-      question: `${Math.min(a, 12)} x ${Math.min(b, 9)} = ?`,
+      question: `${a} x ${b} = ?`,
       answerMode: 'multipleChoice',
       answer: product,
-      explanation: `${Math.min(a, 12)}을 ${Math.min(b, 9)}번 더하면 ${product}입니다.`,
+      explanation: `${a}을 ${b}번 더하면 ${product}입니다.`,
       topic: '곱셈',
     },
     {
@@ -235,29 +236,34 @@ function elementaryDrafts(context: BuildContext): QuestionDraft[] {
       topic: '나눗셈',
     },
     {
-      question: '전체를 똑같이 4칸으로 나눈 것 중 1칸은?',
+      question: `${context.tierLabel} 분수판을 똑같이 ${denominator}칸으로 나눈 것 중 1칸은?`,
       answerMode: 'multipleChoice',
-      answer: '1/4',
-      choices: ['1/4', '1/2', '2/3', '4/1'],
-      explanation: '4칸 중 1칸은 1/4입니다.',
+      answer: `1/${denominator}`,
+      choices: [
+        `1/${denominator}`,
+        `1/${denominator - 1}`,
+        `2/${denominator}`,
+        `${denominator}/1`,
+      ],
+      explanation: `${denominator}칸 중 1칸은 1/${denominator}입니다.`,
       topic: '분수',
     },
     {
-      question: `${a}, ${a + 3}, ${a + 6}, ?`,
+      question: `${a}, ${a + sequenceStep}, ${a + sequenceStep * 2}, ?`,
       answerMode: 'numericInput',
-      answer: a + 9,
-      explanation: '3씩 커지는 규칙입니다.',
+      answer: a + sequenceStep * 3,
+      explanation: `${sequenceStep}씩 커지는 규칙입니다.`,
       topic: '규칙',
     },
     {
-      question: '직사각형의 넓이는 가로 x 세로로 구합니다.',
+      question: `가로 ${a}, 세로 ${b}인 직사각형의 넓이는 가로 x 세로로 구합니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: '직사각형의 넓이는 가로와 세로를 곱합니다.',
       topic: '도형',
     },
     {
-      question: `${b}개씩 든 봉지가 ${context.stageNumber + 2}개 있습니다. 모두 몇 개인가요?`,
+      question: `${context.tierLabel} 간식 봉지에 ${b}개씩 든 과자가 ${context.stageNumber + 2}개 있습니다. 모두 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: b * (context.stageNumber + 2),
       explanation: `${b} x ${context.stageNumber + 2} = ${b * (context.stageNumber + 2)}입니다.`,
@@ -267,9 +273,16 @@ function elementaryDrafts(context: BuildContext): QuestionDraft[] {
 }
 
 function middleSchoolDrafts(context: BuildContext): QuestionDraft[] {
-  const x = context.stageNumber + 2;
+  const x = (context.tierNumber - 9) * 10 + context.stageNumber;
   const y = context.tierNumber - 8;
   const slope = y + 1;
+  const coefficientA = context.stageNumber + 1;
+  const coefficientB = context.tierNumber - 7;
+  const root = (context.tierNumber - 9) * 10 + context.stageNumber + 2;
+  const redBalls = y;
+  const blueBalls = x;
+  const threshold = x + 2;
+  const candidate = threshold - y;
 
   return [
     {
@@ -280,47 +293,57 @@ function middleSchoolDrafts(context: BuildContext): QuestionDraft[] {
       topic: '정수',
     },
     {
-      question: `x + ${x} = ${x + y + 5}일 때 x의 값은?`,
+      question: `z + ${x} = ${x + y + 5}일 때 z의 값은?`,
       answerMode: 'numericInput',
       answer: y + 5,
       explanation: `${x + y + 5}에서 ${x}를 빼면 ${y + 5}입니다.`,
       topic: '일차방정식',
     },
     {
-      question: '2a + 3a를 간단히 하면?',
+      question: `${coefficientA}a + ${coefficientB}a를 간단히 하면?`,
       answerMode: 'multipleChoice',
-      answer: '5a',
-      choices: ['5a', '6a', '5a^2', 'a + 5'],
+      answer: `${coefficientA + coefficientB}a`,
+      choices: [
+        `${coefficientA + coefficientB}a`,
+        `${coefficientA * coefficientB}a`,
+        `${coefficientA + coefficientB}a^2`,
+        `a + ${coefficientA + coefficientB}`,
+      ],
       explanation: '같은 문자끼리는 계수만 더합니다.',
       topic: '문자식',
     },
     {
-      question: `y = ${slope}x + 1에서 x = 3일 때 y는?`,
+      question: `y = ${slope}x + ${context.stageNumber}에서 x = 3일 때 y는?`,
       answerMode: 'numericInput',
-      answer: slope * 3 + 1,
-      explanation: `${slope} x 3 + 1 = ${slope * 3 + 1}입니다.`,
+      answer: slope * 3 + context.stageNumber,
+      explanation: `${slope} x 3 + ${context.stageNumber} = ${slope * 3 + context.stageNumber}입니다.`,
       topic: '함수',
     },
     {
-      question: '√49의 값은?',
+      question: `√${root * root}의 값은?`,
       answerMode: 'multipleChoice',
-      answer: 7,
-      explanation: '7 x 7 = 49입니다.',
+      answer: root,
+      explanation: `${root} x ${root} = ${root * root}입니다.`,
       topic: '제곱근',
     },
     {
-      question: '동전을 한 번 던질 때 앞면이 나올 확률은?',
+      question: `빨간 구슬 ${redBalls}개와 파란 구슬 ${blueBalls}개 중 빨간 구슬을 뽑을 확률은?`,
       answerMode: 'multipleChoice',
-      answer: '1/2',
-      choices: ['1/2', '1/3', '1/4', '1'],
-      explanation: '앞면과 뒷면 두 경우 중 앞면 한 경우입니다.',
+      answer: `${redBalls}/${redBalls + blueBalls}`,
+      choices: [
+        `${redBalls}/${redBalls + blueBalls}`,
+        `${blueBalls}/${redBalls + blueBalls}`,
+        `${redBalls + 1}/${redBalls + blueBalls}`,
+        `${redBalls}/${blueBalls}`,
+      ],
+      explanation: `전체 ${redBalls + blueBalls}개 중 빨간 구슬은 ${redBalls}개입니다.`,
       topic: '확률',
     },
     {
-      question: 'x > 3이면 x = 2는 해가 될 수 있습니다.',
+      question: `x > ${threshold}이면 x = ${candidate}는 해가 될 수 있습니다.`,
       answerMode: 'trueFalse',
       answer: false,
-      explanation: '2는 3보다 크지 않습니다.',
+      explanation: `${candidate}는 ${threshold}보다 크지 않습니다.`,
       topic: '부등식',
     },
     {
@@ -334,8 +357,16 @@ function middleSchoolDrafts(context: BuildContext): QuestionDraft[] {
 }
 
 function highSchoolDrafts(context: BuildContext): QuestionDraft[] {
-  const x = context.stageNumber + context.tierNumber - 12;
-  const difference = context.stageNumber + 1;
+  const x = (context.tierNumber - 12) * 10 + context.stageNumber;
+  const p = (context.tierNumber - 12) * 10 + 1;
+  const q = context.stageNumber + 1;
+  const difference = (context.tierNumber - 12) * 10 + context.stageNumber + 1;
+  const logBase = context.tierNumber - 11;
+  const logExponent = context.stageNumber + 1;
+  const probabilityNumerator = context.tierNumber - 12;
+  const probabilityDenominator = probabilityNumerator + context.stageNumber + 2;
+  const height = context.tierNumber - 10;
+  const width = context.stageNumber + 1;
 
   return [
     {
@@ -346,18 +377,23 @@ function highSchoolDrafts(context: BuildContext): QuestionDraft[] {
       topic: '다항식',
     },
     {
-      question: 'x^2 + 5x + 6을 인수분해하면?',
+      question: `x^2 + ${p + q}x + ${p * q}을 인수분해하면?`,
       answerMode: 'multipleChoice',
-      answer: '(x + 2)(x + 3)',
-      choices: ['(x + 2)(x + 3)', '(x + 1)(x + 6)', '(x - 2)(x - 3)', 'x(x + 5)'],
-      explanation: '2와 3의 합은 5, 곱은 6입니다.',
+      answer: `(x + ${p})(x + ${q})`,
+      choices: [
+        `(x + ${p})(x + ${q})`,
+        `(x + ${p + 1})(x + ${q - 1})`,
+        `(x - ${p})(x - ${q})`,
+        `x(x + ${p + q})`,
+      ],
+      explanation: `${p}와 ${q}의 합은 ${p + q}, 곱은 ${p * q}입니다.`,
       topic: '인수분해',
     },
     {
-      question: `f(x) = 3x - 2일 때 f(${context.stageNumber})는?`,
+      question: `f(x) = 3x - ${p}일 때 f(${x})는?`,
       answerMode: 'numericInput',
-      answer: 3 * context.stageNumber - 2,
-      explanation: `3 x ${context.stageNumber} - 2 = ${3 * context.stageNumber - 2}입니다.`,
+      answer: 3 * x - p,
+      explanation: `3 x ${x} - ${p} = ${3 * x - p}입니다.`,
       topic: '함수',
     },
     {
@@ -368,31 +404,31 @@ function highSchoolDrafts(context: BuildContext): QuestionDraft[] {
       topic: '수열',
     },
     {
-      question: 'log_2 8의 값은?',
+      question: `log_${logBase} ${logBase ** logExponent}의 값은?`,
       answerMode: 'multipleChoice',
-      answer: 3,
-      explanation: '2^3 = 8입니다.',
+      answer: logExponent,
+      explanation: `${logBase}^${logExponent} = ${logBase ** logExponent}입니다.`,
       topic: '로그',
     },
     {
-      question: '확률은 항상 0 이상 1 이하입니다.',
+      question: `확률 ${probabilityNumerator}/${probabilityDenominator}은 0 이상 1 이하입니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: '확률은 0부터 1 사이의 값입니다.',
       topic: '확률',
     },
     {
-      question: 'f(x) = x^2일 때 f′(3)의 값은?',
+      question: `f(x) = x^2일 때 f′(${x})의 값은?`,
       answerMode: 'numericInput',
-      answer: 6,
-      explanation: 'f′(x) = 2x이므로 f′(3) = 6입니다.',
+      answer: 2 * x,
+      explanation: `f′(x) = 2x이므로 f′(${x}) = ${2 * x}입니다.`,
       topic: '미분',
     },
     {
-      question: '상수함수 y = 3을 x = 0부터 x = 2까지 적분한 값은?',
+      question: `상수함수 y = ${height}을 x = 0부터 x = ${width}까지 적분한 값은?`,
       answerMode: 'multipleChoice',
-      answer: 6,
-      explanation: '가로 2, 높이 3인 직사각형의 넓이입니다.',
+      answer: height * width,
+      explanation: `가로 ${width}, 높이 ${height}인 직사각형의 넓이입니다.`,
       topic: '적분',
     },
   ];
@@ -400,6 +436,11 @@ function highSchoolDrafts(context: BuildContext): QuestionDraft[] {
 
 function universityDrafts(context: BuildContext): QuestionDraft[] {
   const n = context.stageNumber + 1;
+  const dimension = context.stageNumber + 2;
+  const exponent = context.stageNumber + 2;
+  const constant = context.stageNumber + 4;
+  const width = context.stageNumber;
+  const mean = context.stageNumber - 5;
 
   return [
     {
@@ -410,29 +451,34 @@ function universityDrafts(context: BuildContext): QuestionDraft[] {
       topic: '선형방정식',
     },
     {
-      question: '2x2 단위행렬의 대각 원소의 합은?',
+      question: `${dimension}x${dimension} 단위행렬의 대각 원소의 합은?`,
       answerMode: 'numericInput',
-      answer: 2,
-      explanation: '단위행렬의 대각 원소는 1, 1이므로 합은 2입니다.',
+      answer: dimension,
+      explanation: `단위행렬의 대각 원소 ${dimension}개가 모두 1이므로 합은 ${dimension}입니다.`,
       topic: '선형대수',
     },
     {
-      question: '함수 f(x) = x^3의 도함수는?',
+      question: `함수 f(x) = x^${exponent}의 도함수는?`,
       answerMode: 'multipleChoice',
-      answer: '3x^2',
-      choices: ['3x^2', 'x^2', '2x', 'x^3 + 1'],
-      explanation: 'x^3을 미분하면 3x^2입니다.',
+      answer: `${exponent}x^${exponent - 1}`,
+      choices: [
+        `${exponent}x^${exponent - 1}`,
+        `x^${exponent - 1}`,
+        `${exponent - 1}x^${exponent}`,
+        `x^${exponent} + 1`,
+      ],
+      explanation: `x^${exponent}을 미분하면 ${exponent}x^${exponent - 1}입니다.`,
       topic: '미분',
     },
     {
-      question: '상수 5를 0부터 1까지 적분한 값은?',
+      question: `상수 ${constant}를 0부터 ${width}까지 적분한 값은?`,
       answerMode: 'numericInput',
-      answer: 5,
-      explanation: '높이 5, 폭 1인 직사각형의 넓이입니다.',
+      answer: constant * width,
+      explanation: `높이 ${constant}, 폭 ${width}인 직사각형의 넓이입니다.`,
       topic: '적분',
     },
     {
-      question: '서로 독립인 두 사건 A, B에 대해 P(A∩B)=P(A)P(B)입니다.',
+      question: `서로 독립인 사건 A_${n}, B_${n}에 대해 P(A_${n}∩B_${n})=P(A_${n})P(B_${n})입니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: '독립 사건의 곱셈정리입니다.',
@@ -446,17 +492,17 @@ function universityDrafts(context: BuildContext): QuestionDraft[] {
       topic: '이산수학',
     },
     {
-      question: '그래프에서 모든 꼭짓점의 차수가 2이면 사이클일 수 있습니다.',
+      question: `정${n + 2}각형의 순환 그래프에서 모든 꼭짓점의 차수는 2입니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: '모든 꼭짓점 차수가 2인 연결 그래프는 사이클입니다.',
       topic: '그래프',
     },
     {
-      question: '평균이 0인 표준정규분포의 중앙값은?',
+      question: `평균이 ${mean}인 정규분포가 대칭이면 중앙값은?`,
       answerMode: 'numericInput',
-      answer: 0,
-      explanation: '표준정규분포는 0을 중심으로 대칭입니다.',
+      answer: mean,
+      explanation: `대칭인 정규분포에서는 평균과 중앙값이 ${mean}으로 같습니다.`,
       topic: '통계',
     },
   ];
@@ -467,14 +513,14 @@ function graduateDrafts(context: BuildContext): QuestionDraft[] {
 
   return [
     {
-      question: '군에서 항등원은 하나뿐입니다.',
+      question: `연산 구조 G_${n}이 군이라면 항등원은 하나뿐입니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: '항등원이 둘이라고 가정하면 서로 같음을 보일 수 있습니다.',
       topic: '추상대수',
     },
     {
-      question: '모든 코시 수열이 수렴하는 공간을 무엇이라 하나요?',
+      question: `거리공간 X_${n}에서 모든 코시 수열이 수렴하는 성질을 무엇이라 하나요?`,
       answerMode: 'multipleChoice',
       answer: '완비공간',
       choices: ['완비공간', '공집합', '부분공간', '영공간'],
@@ -482,14 +528,14 @@ function graduateDrafts(context: BuildContext): QuestionDraft[] {
       topic: '해석학',
     },
     {
-      question: `볼록함수 f(x)=x^2의 전역 최소점 x는?`,
+      question: `볼록함수 f(x)=(x-${n})^2의 전역 최소점 x는?`,
       answerMode: 'numericInput',
-      answer: 0,
-      explanation: 'x^2은 x = 0에서 최솟값을 가집니다.',
+      answer: n,
+      explanation: `(x-${n})^2은 x = ${n}에서 최솟값을 가집니다.`,
       topic: '최적화',
     },
     {
-      question: '그래프 최단거리 문제에 다익스트라 알고리즘을 쓸 수 있습니다.',
+      question: `모든 간선 가중치가 ${n} 이상인 최단거리 문제에는 다익스트라 알고리즘을 쓸 수 있습니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: '간선 가중치가 음수가 아니면 다익스트라를 사용할 수 있습니다.',
@@ -503,21 +549,21 @@ function graduateDrafts(context: BuildContext): QuestionDraft[] {
       topic: '선형대수',
     },
     {
-      question: '연속함수의 합은 항상 연속입니다.',
+      question: `연속함수 f_${n}과 g_${n}의 합은 항상 연속입니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: '연속함수들의 합도 연속함수입니다.',
       topic: '해석학',
     },
     {
-      question: 'P 대 NP 문제는 이미 일반적으로 해결되었습니다.',
+      question: `P 대 NP 문제는 ${2000 + n}년에 일반적으로 해결되었습니다.`,
       answerMode: 'trueFalse',
       answer: false,
       explanation: 'P 대 NP는 아직 해결되지 않은 대표 난제입니다.',
       topic: '계산이론',
     },
     {
-      question: '행렬식이 0이 아닌 정사각행렬은 무엇을 가질까요?',
+      question: `행렬식이 ${n}인 정사각행렬은 무엇을 가질까요?`,
       answerMode: 'multipleChoice',
       answer: '역행렬',
       choices: ['역행렬', '항상 영행렬', '무한한 행렬식', '음수 차원'],
@@ -640,7 +686,7 @@ function bossDrafts(context: BuildContext): QuestionDraft[] {
       topic: '비교 함정',
     },
     {
-      question: '보스전: 문제에서 "아닌 것"을 물으면 맞는 설명을 고르면 됩니다.',
+      question: `보스전: ${base}번 함정에서 "아닌 것"을 물으면 맞는 설명을 고르면 됩니다.`,
       answerMode: 'trueFalse',
       answer: false,
       explanation: '"아닌 것"은 틀린 설명을 골라야 합니다.',
@@ -661,7 +707,7 @@ function bossDrafts(context: BuildContext): QuestionDraft[] {
       topic: '복합 계산',
     },
     {
-      question: '보스전: 모든 정사각형은 직사각형입니다.',
+      question: `보스전: 한 변이 ${base}인 모든 정사각형은 직사각형입니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: '정사각형은 네 각이 직각이므로 직사각형의 조건을 만족합니다.',

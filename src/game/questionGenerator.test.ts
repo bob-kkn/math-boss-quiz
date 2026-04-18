@@ -77,6 +77,9 @@ describe('question generation', () => {
     const questionText = questions.map((question) => question.question);
 
     expect(new Set(questionText).size).toBe(TOTAL_GENERATED_QUESTIONS);
+    questionText.forEach((question) => {
+      expect(question).not.toMatch(/^\S+ \d+스테이지 \d+번\./);
+    });
   });
 
   it('creates complete question content for every generated question', () => {
