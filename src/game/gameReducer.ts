@@ -3,14 +3,25 @@ import {
   FINAL_MAIN_TIER,
   FINAL_TIER,
   getQuestionCountForStage,
+  getStageKey,
   getStageCountForTier,
 } from './stageConfig';
-import type { AnswerValue, GameState, PlayerAnswer, Question } from './types';
+import type {
+  AnswerValue,
+  GameState,
+  PlayerAnswer,
+  Question,
+  StageResult,
+} from './types';
+
+export const BOSS_MAX_HP = 6;
+export const PLAYER_MAX_HP = 3;
 
 export type GameAction =
   | { type: 'selectAnswer'; answer: PlayerAnswer }
   | { type: 'submitAnswer'; question: Question }
   | { type: 'goNext' }
+  | { type: 'retryBoss' }
   | { type: 'restart' }
   | { type: 'debugJumpToFinalBoss' }
   | { type: 'debugOpenBonus' };
@@ -25,6 +36,13 @@ export function createInitialGameState(): GameState {
     lastAnswerCorrect: null,
     phase: 'main',
     score: 0,
+    combo: 0,
+    bestCombo: 0,
+    stageCorrectCount: 0,
+    stageStartScore: 0,
+    bossHp: BOSS_MAX_HP,
+    playerHp: PLAYER_MAX_HP,
+    stageResults: {},
   };
 }
 
@@ -70,24 +88,84 @@ function resetQuestionState(state: GameState): GameState {
   };
 }
 
+function resetStageChallengeState(state: GameState): GameState {
+  return resetQuestionState({
+    ...state,
+    combo: 0,
+    bestCombo: 0,
+    stageCorrectCount: 0,
+    stageStartScore: state.score,
+    bossHp: BOSS_MAX_HP,
+    playerHp: PLAYER_MAX_HP,
+  });
+}
+
+export function calculateStars(
+  correctCount: number,
+  questionCount: number,
+): number {
+  if (correctCount === questionCount) {
+    return 3;
+  }
+
+  return correctCount / questionCount >= 0.75 ? 2 : 1;
+}
+
+function recordStageResult(state: GameState, isBoss: boolean): GameState {
+  const questionCount = getQuestionCountForStage(
+    state.tierNumber,
+    state.stageNumber,
+  );
+  const result: StageResult = {
+    correctCount: state.stageCorrectCount,
+    questionCount,
+    stars: calculateStars(state.stageCorrectCount, questionCount),
+    bestCombo: state.bestCombo,
+    isBoss,
+    clearedAt: new Date().toISOString(),
+  };
+
+  return {
+    ...state,
+    stageResults: {
+      ...state.stageResults,
+      [getStageKey(state.tierNumber, state.stageNumber)]: result,
+    },
+  };
+}
+
 function submitAnswer(state: GameState, question: Question): GameState {
-  if (state.selectedAnswer === null || state.hasSubmitted) {
+  if (state.phase !== 'main' || state.selectedAnswer === null || state.hasSubmitted) {
     return state;
   }
 
   const correct = isAnswerCorrect(question, state.selectedAnswer);
+  const combo = correct ? state.combo + 1 : 0;
+  const bossHp = question.isBoss && correct ? Math.max(0, state.bossHp - 1) : state.bossHp;
+  const playerHp =
+    question.isBoss && !correct
+      ? Math.max(0, state.playerHp - 1)
+      : state.playerHp;
 
   return {
     ...state,
     hasSubmitted: true,
     lastAnswerCorrect: correct,
     score: correct ? state.score + 1 : state.score,
+    combo,
+    bestCombo: Math.max(state.bestCombo, combo),
+    stageCorrectCount: correct
+      ? state.stageCorrectCount + 1
+      : state.stageCorrectCount,
+    bossHp,
+    playerHp,
+    phase: question.isBoss && playerHp === 0 ? 'bossFailed' : state.phase,
   };
 }
 
 function goNext(state: GameState): GameState {
   if (state.phase === 'stageCleared') {
-    return resetQuestionState({
+    return resetStageChallengeState({
       ...state,
       stageNumber: state.stageNumber + 1,
       questionIndex: 0,
@@ -103,7 +181,7 @@ function goNext(state: GameState): GameState {
       };
     }
 
-    return resetQuestionState({
+    return resetStageChallengeState({
       ...state,
       tierNumber: state.tierNumber + 1,
       stageNumber: 1,
@@ -130,17 +208,47 @@ function goNext(state: GameState): GameState {
     });
   }
 
-  if (state.stageNumber === stageCount) {
+  if (state.bossHp > 0 && state.stageNumber === stageCount && state.tierNumber !== FINAL_TIER) {
     return {
       ...state,
-      phase: state.tierNumber === FINAL_TIER ? 'gameCleared' : 'tierCleared',
+      phase: 'bossFailed',
+    };
+  }
+
+  const cleared = recordStageResult(
+    state,
+    state.stageNumber === stageCount && state.tierNumber !== FINAL_TIER,
+  );
+
+  if (state.stageNumber === stageCount) {
+    return {
+      ...cleared,
+      phase: cleared.tierNumber === FINAL_TIER ? 'gameCleared' : 'tierCleared',
     };
   }
 
   return {
-    ...state,
+    ...cleared,
     phase: 'stageCleared',
   };
+}
+
+function retryBoss(state: GameState): GameState {
+  if (state.phase !== 'bossFailed') {
+    return state;
+  }
+
+  return resetQuestionState({
+    ...state,
+    questionIndex: 0,
+    phase: 'main',
+    score: state.stageStartScore,
+    combo: 0,
+    bestCombo: 0,
+    stageCorrectCount: 0,
+    bossHp: BOSS_MAX_HP,
+    playerHp: PLAYER_MAX_HP,
+  });
 }
 
 export function gameReducer(
@@ -161,6 +269,8 @@ export function gameReducer(
       return submitAnswer(state, action.question);
     case 'goNext':
       return goNext(state);
+    case 'retryBoss':
+      return retryBoss(state);
     case 'restart':
       return createInitialGameState();
     case 'debugJumpToFinalBoss':

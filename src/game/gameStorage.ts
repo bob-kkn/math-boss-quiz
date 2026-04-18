@@ -3,10 +3,11 @@ import {
   getQuestionCountForStage,
   getStageCountForTier,
 } from './stageConfig';
-import type { GamePhase, GameState, PlayerAnswer } from './types';
+import { BOSS_MAX_HP, PLAYER_MAX_HP } from './gameReducer';
+import type { GamePhase, GameState, PlayerAnswer, StageResult } from './types';
 
 const STORAGE_KEY = 'math-boss-quiz:game-state';
-const STORAGE_VERSION = 3;
+const STORAGE_VERSION = 4;
 
 interface SavedGamePayload {
   version: number;
@@ -17,6 +18,7 @@ const gamePhases: GamePhase[] = [
   'main',
   'stageCleared',
   'tierCleared',
+  'bossFailed',
   'gameCleared',
 ];
 
@@ -30,6 +32,42 @@ function isValidPlayerAnswer(value: unknown): value is PlayerAnswer {
     typeof value === 'number' ||
     typeof value === 'string' ||
     typeof value === 'boolean'
+  );
+}
+
+function isValidStageResult(value: unknown): value is StageResult {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.correctCount === 'number' &&
+    candidate.correctCount >= 0 &&
+    typeof candidate.questionCount === 'number' &&
+    candidate.questionCount > 0 &&
+    candidate.correctCount <= candidate.questionCount &&
+    typeof candidate.stars === 'number' &&
+    candidate.stars >= 1 &&
+    candidate.stars <= 3 &&
+    typeof candidate.bestCombo === 'number' &&
+    candidate.bestCombo >= 0 &&
+    typeof candidate.isBoss === 'boolean' &&
+    typeof candidate.clearedAt === 'string' &&
+    candidate.clearedAt.trim() !== ''
+  );
+}
+
+function isValidStageResults(
+  value: unknown,
+): value is Record<string, StageResult> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  return Object.entries(value).every(
+    ([key, result]) => key.trim() !== '' && isValidStageResult(result),
   );
 }
 
@@ -76,7 +114,23 @@ function isValidGameState(value: unknown): value is GameState {
       candidate.lastAnswerCorrect === null) &&
     gamePhases.includes(candidate.phase as GamePhase) &&
     typeof candidate.score === 'number' &&
-    candidate.score >= 0
+    candidate.score >= 0 &&
+    typeof candidate.combo === 'number' &&
+    candidate.combo >= 0 &&
+    typeof candidate.bestCombo === 'number' &&
+    candidate.bestCombo >= 0 &&
+    typeof candidate.stageCorrectCount === 'number' &&
+    candidate.stageCorrectCount >= 0 &&
+    candidate.stageCorrectCount <= questionCount &&
+    typeof candidate.stageStartScore === 'number' &&
+    candidate.stageStartScore >= 0 &&
+    typeof candidate.bossHp === 'number' &&
+    candidate.bossHp >= 0 &&
+    candidate.bossHp <= BOSS_MAX_HP &&
+    typeof candidate.playerHp === 'number' &&
+    candidate.playerHp >= 0 &&
+    candidate.playerHp <= PLAYER_MAX_HP &&
+    isValidStageResults(candidate.stageResults)
   );
 }
 

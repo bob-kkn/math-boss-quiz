@@ -4,7 +4,12 @@ export type AnswerValue = number | string | boolean;
 
 export type PlayerAnswer = AnswerValue | null;
 
-export type GamePhase = 'main' | 'stageCleared' | 'tierCleared' | 'gameCleared';
+export type GamePhase =
+  | 'main'
+  | 'stageCleared'
+  | 'tierCleared'
+  | 'bossFailed'
+  | 'gameCleared';
 
 export type ProgressStatus = 'completed' | 'active' | 'locked';
 
@@ -44,6 +49,15 @@ export interface Question {
   numericTolerance?: number;
 }
 
+export interface StageResult {
+  correctCount: number;
+  questionCount: number;
+  stars: number;
+  bestCombo: number;
+  isBoss: boolean;
+  clearedAt: string;
+}
+
 export interface GameState {
   tierNumber: number;
   stageNumber: number;
@@ -53,4 +67,11 @@ export interface GameState {
   lastAnswerCorrect: boolean | null;
   phase: GamePhase;
   score: number;
+  combo: number;
+  bestCombo: number;
+  stageCorrectCount: number;
+  stageStartScore: number;
+  bossHp: number;
+  playerHp: number;
+  stageResults: Record<string, StageResult>;
 }

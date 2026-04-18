@@ -82,7 +82,7 @@ h2 {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -268,6 +268,51 @@ h2 {
   object-fit: cover;
 }
 
+.boss-status {
+  display: grid;
+  max-width: 840px;
+  gap: 14px;
+  padding: 18px;
+  border: 3px solid #151515;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.boss-status-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-weight: 900;
+}
+
+.boss-status-label strong {
+  color: #e43d30;
+}
+
+.hp-track {
+  height: 16px;
+  overflow: hidden;
+  border: 2px solid #151515;
+  border-radius: 8px;
+  background: #eeeeee;
+}
+
+.hp-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 180ms ease;
+}
+
+.boss-hp {
+  background: #e43d30;
+}
+
+.player-hp {
+  background: #29a36a;
+}
+
 .question-panel,
 .result-panel {
   display: grid;
@@ -306,7 +351,8 @@ h2 {
 }
 
 .answer-mode,
-.boss-badge {
+.boss-badge,
+.combo-badge {
   display: inline-flex;
   min-height: 28px;
   align-items: center;
@@ -322,6 +368,11 @@ h2 {
 .boss-badge {
   color: #ffffff;
   background: #e43d30;
+}
+
+.combo-badge {
+  color: #151515;
+  background: #f7c948;
 }
 
 .choices {
@@ -404,6 +455,23 @@ h2 {
 
 .feedback strong {
   flex: 0 0 auto;
+}
+
+.reward-summary {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 2px solid #151515;
+  border-radius: 8px;
+  background: #f5f7fb;
+}
+
+.reward-summary strong {
+  font-size: 1.2rem;
+}
+
+.reward-summary span {
+  line-height: 1.5;
 }
 
 .actions {

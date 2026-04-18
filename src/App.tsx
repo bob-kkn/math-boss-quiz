@@ -7,9 +7,12 @@ import {
   TOTAL_MAIN_QUESTIONS,
   createStageMap,
   createTierMap,
+  getStageKey,
 } from './game/stageConfig';
 import { generateStageQuestions } from './game/questionGenerator';
 import {
+  BOSS_MAX_HP,
+  PLAYER_MAX_HP,
   createInitialGameState,
   gameReducer,
   isAnswerCorrect,
@@ -135,6 +138,10 @@ function getNextButtonLabel(
   return isLastQuestion ? '스테이지 완료' : '다음 문제';
 }
 
+function formatStars(stars: number): string {
+  return `별 ${stars}개`;
+}
+
 export default function App() {
   const [state, dispatch] = useReducer(
     gameReducer,
@@ -157,6 +164,8 @@ export default function App() {
   );
   const selectedTier = tierMap[state.tierNumber - 1] ?? tierMap[0];
   const selectedStage = stageMap[state.stageNumber - 1] ?? stageMap[0];
+  const currentStageResult =
+    state.stageResults[getStageKey(state.tierNumber, state.stageNumber)];
   const progressPercent = getProgressPercent(state, activeQuestions.length);
   const isCorrect =
     currentQuestion && state.hasSubmitted
@@ -206,6 +215,10 @@ export default function App() {
               {activeQuestions.length}
             </strong>
           </div>
+          <div className="stat-box">
+            <span>콤보</span>
+            <strong>{state.combo}</strong>
+          </div>
         </div>
 
         <div className="progress-block">
@@ -245,13 +258,28 @@ export default function App() {
           </div>
           <ol className="stage-list" aria-label="현재 단계 스테이지">
             {stageMap.map((stage) => (
-              <li
-                className={`stage-item ${stage.status}`}
-                key={stage.stageNumber}
-              >
-                <span>{stage.label}</span>
-                <small>{stage.isBossStage ? '보스전' : '8문항'}</small>
-              </li>
+              (() => {
+                const result =
+                  state.stageResults[
+                    getStageKey(stage.tierNumber, stage.stageNumber)
+                  ];
+
+                return (
+                  <li
+                    className={`stage-item ${stage.status}`}
+                    key={stage.stageNumber}
+                  >
+                    <span>{stage.label}</span>
+                    <small>
+                      {result
+                        ? formatStars(result.stars)
+                        : stage.isBossStage
+                          ? '보스전'
+                          : `${stage.questionCount}문항`}
+                    </small>
+                  </li>
+                );
+              })()
             ))}
           </ol>
         </section>
@@ -307,6 +335,42 @@ export default function App() {
           </div>
         </div>
 
+        {selectedStage.isBossStage ? (
+          <section className="boss-status" aria-label="보스전 상태">
+            <div>
+              <div className="boss-status-label">
+                <span>보스 HP</span>
+                <strong>
+                  {state.bossHp}/{BOSS_MAX_HP}
+                </strong>
+              </div>
+              <div className="hp-track" aria-hidden="true">
+                <div
+                  className="hp-fill boss-hp"
+                  style={{ width: `${(state.bossHp / BOSS_MAX_HP) * 100}%` }}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="boss-status-label">
+                <span>플레이어 HP</span>
+                <strong aria-label={`플레이어 체력 ${state.playerHp}`}>
+                  {'♥'.repeat(state.playerHp)}
+                  {'♡'.repeat(PLAYER_MAX_HP - state.playerHp)}
+                </strong>
+              </div>
+              <div className="hp-track" aria-hidden="true">
+                <div
+                  className="hp-fill player-hp"
+                  style={{
+                    width: `${(state.playerHp / PLAYER_MAX_HP) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         {state.phase === 'stageCleared' ? (
           <div className="result-panel">
             <p className="eyebrow">Stage Clear</p>
@@ -315,6 +379,16 @@ export default function App() {
               {selectedStage.questionCount}문항을 완료했습니다. 다음 스테이지로
               이동합니다.
             </p>
+            {currentStageResult ? (
+              <div className="reward-summary" aria-label="스테이지 보상">
+                <strong>{formatStars(currentStageResult.stars)}</strong>
+                <span>
+                  정답 {currentStageResult.correctCount}/
+                  {currentStageResult.questionCount} · 최고 콤보{' '}
+                  {currentStageResult.bestCombo}
+                </span>
+              </div>
+            ) : null}
             <button
               className="primary-action"
               type="button"
@@ -333,12 +407,47 @@ export default function App() {
               10스테이지를 모두 완료했습니다. 다음 단계는 더 높은 난이도로
               이어집니다.
             </p>
+            {currentStageResult ? (
+              <div className="reward-summary" aria-label="보스전 보상">
+                <strong>{formatStars(currentStageResult.stars)}</strong>
+                <span>
+                  정답 {currentStageResult.correctCount}/
+                  {currentStageResult.questionCount} · 최고 콤보{' '}
+                  {currentStageResult.bestCombo}
+                </span>
+              </div>
+            ) : null}
             <button
               className="primary-action"
               type="button"
               onClick={() => dispatch({ type: 'goNext' })}
             >
               다음 단계
+            </button>
+          </div>
+        ) : null}
+
+        {state.phase === 'bossFailed' ? (
+          <div className="result-panel danger">
+            <p className="eyebrow">Boss Failed</p>
+            <h2>보스전 재도전</h2>
+            <p>
+              보스의 HP를 모두 깎지 못했습니다. 이 보스 스테이지의 점수는
+              시작 시점으로 되돌리고 1번 문제부터 다시 도전합니다.
+            </p>
+            <div className="reward-summary" aria-label="보스전 실패 기록">
+              <strong>현재 정답 {state.stageCorrectCount}개</strong>
+              <span>
+                보스 HP {state.bossHp}/{BOSS_MAX_HP} · 플레이어 HP{' '}
+                {state.playerHp}/{PLAYER_MAX_HP}
+              </span>
+            </div>
+            <button
+              className="primary-action"
+              type="button"
+              onClick={() => dispatch({ type: 'retryBoss' })}
+            >
+              재도전
             </button>
           </div>
         ) : null}
@@ -378,6 +487,7 @@ export default function App() {
                 {currentQuestion.isBoss ? (
                   <span className="boss-badge">보스전</span>
                 ) : null}
+                <span className="combo-badge">콤보 {state.combo}</span>
               </div>
               <span className="question-count">
                 {state.questionIndex + 1}/{activeQuestions.length}

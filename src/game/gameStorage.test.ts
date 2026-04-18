@@ -27,6 +27,30 @@ describe('game storage', () => {
     expect(loadSavedGameState()).toEqual(state);
   });
 
+  it('uses storage schema version 4 for game reward state', () => {
+    expect(gameStorageVersion).toBe(4);
+  });
+
+  it('saves and loads stage reward results', () => {
+    const state = {
+      ...createInitialGameState(),
+      stageResults: {
+        '1-1': {
+          correctCount: 8,
+          questionCount: 8,
+          stars: 3,
+          bestCombo: 8,
+          isBoss: false,
+          clearedAt: '2026-04-18T00:00:00.000Z',
+        },
+      },
+    };
+
+    saveGameState(state);
+
+    expect(loadSavedGameState()).toEqual(state);
+  });
+
   it('saves and loads the final bonus question', () => {
     const state = {
       ...createInitialGameState(),
@@ -69,6 +93,31 @@ describe('game storage', () => {
         state: {
           ...createInitialGameState(),
           tierNumber: 99,
+        },
+      }),
+    );
+
+    expect(loadSavedGameState()).toBeNull();
+    expect(window.localStorage.getItem(gameStorageKey)).toBeNull();
+  });
+
+  it('drops invalid stage reward data', () => {
+    window.localStorage.setItem(
+      gameStorageKey,
+      JSON.stringify({
+        version: gameStorageVersion,
+        state: {
+          ...createInitialGameState(),
+          stageResults: {
+            '1-1': {
+              correctCount: 9,
+              questionCount: 8,
+              stars: 4,
+              bestCombo: 8,
+              isBoss: false,
+              clearedAt: '2026-04-18T00:00:00.000Z',
+            },
+          },
         },
       }),
     );
