@@ -1,0 +1,17 @@
+{
+  "name": "수학 보스전 웹앱",
+  "short_name": "수학 보스전",
+  "description": "아기부터 대학원까지 단계별 수학 퀴즈와 보스전을 플레이하는 웹앱입니다.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#151515",
+  "icons": [
+    {
+      "src": "/assets/app-icon.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

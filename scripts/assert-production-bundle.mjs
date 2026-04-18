@@ -11,7 +11,11 @@ const blockedDevOnlyText = [
   'QA 초기화',
 ];
 const requiredProductionText = ['수학 보스전', '자동 저장', '저장 초기화', '콤보'];
-const requiredAssets = ['assets/boss.svg'];
+const requiredAssets = [
+  'assets/app-icon.svg',
+  'assets/boss.svg',
+  'manifest.webmanifest',
+];
 
 async function collectFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -69,7 +73,7 @@ const indexHtml = await readFile(indexHtmlPath, 'utf8');
 const referencedAssets = Array.from(
   indexHtml.matchAll(/(?:href|src)="\/([^"]+)"/g),
   (match) => match[1],
-).filter((assetPath) => assetPath.startsWith('assets/'));
+).filter((assetPath) => !assetPath.startsWith('src/'));
 const assetsToCheck = new Set([...referencedAssets, ...requiredAssets]);
 const missingAssets = [];
 
