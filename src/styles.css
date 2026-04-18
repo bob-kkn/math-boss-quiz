@@ -352,6 +352,8 @@ h2 {
 
 .answer-mode,
 .boss-badge,
+.concept-badge,
+.difficulty-badge,
 .combo-badge {
   display: inline-flex;
   min-height: 28px;
@@ -373,6 +375,16 @@ h2 {
 .combo-badge {
   color: #151515;
   background: #f7c948;
+}
+
+.concept-badge {
+  color: #151515;
+  background: #ffffff;
+}
+
+.difficulty-badge {
+  color: #ffffff;
+  background: #151515;
 }
 
 .choices {

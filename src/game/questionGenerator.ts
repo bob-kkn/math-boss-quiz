@@ -10,7 +10,12 @@ import {
   getTierConfig,
   isBossStage,
 } from './stageConfig';
-import type { AnswerMode, AnswerValue, Question } from './types';
+import {
+  buildLearningExplanation,
+  getDifficultyBand,
+  inferSkill,
+} from './contentQuality';
+import type { AnswerMode, AnswerValue, Question, SkillTag } from './types';
 
 type RandomSource = () => number;
 
@@ -21,6 +26,8 @@ interface QuestionDraft {
   choices?: AnswerValue[];
   explanation: string;
   topic: string;
+  concept?: string;
+  skill?: SkillTag;
 }
 
 interface GeneratorOptions {
@@ -105,6 +112,9 @@ function finalizeQuestion(
     throw new Error('String multiple choice questions must provide choices.');
   }
 
+  const concept = draft.concept ?? draft.topic;
+  const skill = draft.skill ?? inferSkill(draft.topic);
+
   return {
     id: `tier-${context.tierNumber}-stage-${context.stageNumber}-question-${order}`,
     tierNumber: context.tierNumber,
@@ -122,8 +132,11 @@ function finalizeQuestion(
       : draft.choices
         ? shuffleWithRandom(draft.choices, random)
         : undefined,
-    explanation: draft.explanation,
+    explanation: buildLearningExplanation(draft.explanation, concept),
     topic: boss ? `${draft.topic} 보스` : draft.topic,
+    concept,
+    skill,
+    difficultyBand: getDifficultyBand(context.tierNumber, context.stageNumber),
     level: context.tierLabel,
     isBoss: boss,
     numericTolerance: 0,

@@ -5,6 +5,12 @@ import {
   getTotalGeneratedQuestionCount,
 } from './questionGenerator';
 import {
+  formatDifficultyBand,
+  getAllowedAnswerModesForQuestion,
+  getDifficultyBand,
+  validateQuestionContent,
+} from './contentQuality';
+import {
   BOSS_STAGE_NUMBER,
   BONUS_TIER_NUMBER,
   FINAL_MAIN_TIER,
@@ -91,7 +97,39 @@ describe('question generation', () => {
       expect(question.question.trim()).not.toBe('');
       expect(question.explanation.trim()).not.toBe('');
       expect(question.topic.trim()).not.toBe('');
+      expect(question.concept.trim()).not.toBe('');
+      expect(question.skill.trim()).not.toBe('');
+      expect(formatDifficultyBand(question.difficultyBand)).not.toBe('');
       expect(question.level.trim()).not.toBe('');
+    });
+  });
+
+  it('passes the content quality audit for every generated question', () => {
+    const questions = Object.values(
+      generateAllStageQuestions({ seed: 'quality' }),
+    ).flat();
+    const issues = questions.flatMap(validateQuestionContent);
+
+    expect(issues).toEqual([]);
+  });
+
+  it('uses the expected difficulty bands across a main tier', () => {
+    expect(getDifficultyBand(4, 1)).toBe('intro');
+    expect(getDifficultyBand(4, 4)).toBe('practice');
+    expect(getDifficultyBand(4, 8)).toBe('application');
+    expect(getDifficultyBand(4, BOSS_STAGE_NUMBER)).toBe('boss');
+    expect(getDifficultyBand(BONUS_TIER_NUMBER, 1)).toBe('bonus');
+  });
+
+  it('keeps generated answer modes inside each tier content profile', () => {
+    const questions = Object.values(
+      generateAllStageQuestions({ seed: 'answer-mode-profile' }),
+    ).flat();
+
+    questions.forEach((question) => {
+      expect(getAllowedAnswerModesForQuestion(question)).toContain(
+        question.answerMode,
+      );
     });
   });
 

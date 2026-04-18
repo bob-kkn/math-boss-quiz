@@ -13,6 +13,27 @@ export type GamePhase =
 
 export type ProgressStatus = 'completed' | 'active' | 'locked';
 
+export type DifficultyBand =
+  | 'intro'
+  | 'practice'
+  | 'application'
+  | 'boss'
+  | 'bonus';
+
+export type SkillTag =
+  | 'counting'
+  | 'calculation'
+  | 'comparison'
+  | 'pattern'
+  | 'geometry'
+  | 'wordProblem'
+  | 'algebra'
+  | 'function'
+  | 'probability'
+  | 'calculus'
+  | 'logic'
+  | 'advanced';
+
 export interface TierConfig {
   tierNumber: number;
   label: string;
@@ -44,6 +65,9 @@ export interface Question {
   choices?: AnswerValue[];
   explanation: string;
   topic: string;
+  concept: string;
+  skill: SkillTag;
+  difficultyBand: DifficultyBand;
   level: string;
   isBoss: boolean;
   numericTolerance?: number;

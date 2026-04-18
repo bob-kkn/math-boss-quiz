@@ -22,6 +22,9 @@ function makeQuestion(overrides: Partial<Question>): Question {
     choices: [3, 4, 5, 6],
     explanation: '테스트 해설',
     topic: '테스트',
+    concept: '테스트 개념',
+    skill: 'calculation',
+    difficultyBand: 'intro',
     level: '테스트',
     isBoss: false,
     ...overrides,
@@ -79,6 +82,8 @@ describe('App UI', () => {
 
     expect(screen.getByRole('heading', { name: '아기' })).toBeInTheDocument();
     expect(screen.getByText('4지선다')).toBeInTheDocument();
+    expect(screen.getByText(/^핵심 /)).toBeInTheDocument();
+    expect(screen.getByText('기초')).toBeInTheDocument();
     expect(screen.getByText('콤보 0')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '제출' })).toBeDisabled();
   });

@@ -10,6 +10,7 @@ import {
   getStageKey,
 } from './game/stageConfig';
 import { generateStageQuestions } from './game/questionGenerator';
+import { formatDifficultyBand } from './game/contentQuality';
 import {
   BOSS_MAX_HP,
   PLAYER_MAX_HP,
@@ -487,6 +488,12 @@ export default function App() {
                 {currentQuestion.isBoss ? (
                   <span className="boss-badge">보스전</span>
                 ) : null}
+                <span className="concept-badge">
+                  핵심 {currentQuestion.concept}
+                </span>
+                <span className="difficulty-badge">
+                  {formatDifficultyBand(currentQuestion.difficultyBand)}
+                </span>
                 <span className="combo-badge">콤보 {state.combo}</span>
               </div>
               <span className="question-count">
