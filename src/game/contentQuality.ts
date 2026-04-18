@@ -190,7 +190,26 @@ export function buildLearningExplanation(
     return trimmed;
   }
 
-  return `${trimmed} 핵심: ${concept}을 확인하세요.`;
+  return `${trimmed} 핵심: ${concept}${getObjectParticle(concept)} 확인하세요.`;
+}
+
+function getObjectParticle(text: string): '을' | '를' {
+  const trimmed = text.trim();
+  const lastChar = trimmed.charAt(trimmed.length - 1);
+
+  if (!lastChar) {
+    return '을';
+  }
+
+  const code = lastChar.charCodeAt(0);
+  const hangulStart = 0xac00;
+  const hangulEnd = 0xd7a3;
+
+  if (code < hangulStart || code > hangulEnd) {
+    return '을';
+  }
+
+  return (code - hangulStart) % 28 === 0 ? '를' : '을';
 }
 
 export function validateQuestionContent(question: Question): string[] {

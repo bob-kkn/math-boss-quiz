@@ -7,5 +7,6 @@ npm-debug.log*
 vite-dev*.log
 playwright-report
 test-results
+reports
 
 .vercel
