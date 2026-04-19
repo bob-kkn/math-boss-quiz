@@ -88,6 +88,23 @@ describe('question generation', () => {
     });
   });
 
+  it('does not prefix visible question text with tier labels', () => {
+    const questions = Object.values(
+      generateAllStageQuestions({ seed: 'no-tier-prefix' }),
+    ).flat();
+    const escapedTierLabels = createTierMap()
+      .map((tier) => tier.label)
+      .sort((left, right) => right.length - left.length)
+      .map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const tierPrefixPattern = new RegExp(
+      `^(${escapedTierLabels.join('|')})(\\s|\\d|:|：)`,
+    );
+
+    questions.forEach((question) => {
+      expect(question.question).not.toMatch(tierPrefixPattern);
+    });
+  });
+
   it('creates complete question content for every generated question', () => {
     const questions = Object.values(
       generateAllStageQuestions({ seed: 'content' }),

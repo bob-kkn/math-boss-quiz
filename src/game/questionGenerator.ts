@@ -150,28 +150,28 @@ function earlyDrafts(context: BuildContext): QuestionDraft[] {
 
   return [
     {
-      question: `${context.tierLabel} 바구니에 ${base}개와 1개를 합치면 몇 개인가요?`,
+      question: `바구니 ${context.difficulty}에 ${base}개와 1개를 합치면 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: next,
       explanation: `${base} 다음 수는 ${next}입니다.`,
       topic: '수 세기',
     },
     {
-      question: `${context.tierLabel} 접시에 있는 ${sum}개 중 1개를 빼면 몇 개인가요?`,
+      question: `접시 ${context.difficulty}에 있는 ${sum}개 중 1개를 빼면 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: sum - 1,
       explanation: `${sum}에서 1을 빼면 ${sum - 1}입니다.`,
       topic: '빼기 감각',
     },
     {
-      question: `${context.tierLabel} 숫자 카드에서 ${next}은 ${base}보다 큽니다.`,
+      question: `숫자 카드 ${context.difficulty}에서 ${next}은 ${base}보다 큽니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: `${next}은 ${base}보다 1 큰 수입니다.`,
       topic: '크기 비교',
     },
     {
-      question: `${context.tierLabel} ${base}번 그림판에서 동그라미처럼 모서리가 없는 도형은 무엇인가요?`,
+      question: `${context.difficulty}번 그림판에서 동그라미처럼 모서리가 없는 도형은 무엇인가요?`,
       answerMode: 'multipleChoice',
       answer: '원',
       choices: ['원', '삼각형', '사각형', '별'],
@@ -179,28 +179,28 @@ function earlyDrafts(context: BuildContext): QuestionDraft[] {
       topic: '모양',
     },
     {
-      question: `${context.tierLabel} 규칙 카드: ${base}, ${next}, ?`,
+      question: `규칙 카드 ${context.difficulty}: ${base}, ${next}, ?`,
       answerMode: 'multipleChoice',
       answer: next + 1,
       explanation: '1씩 커지는 순서입니다.',
       topic: '규칙',
     },
     {
-      question: `${context.tierLabel} 놀이에서 사탕 ${base}개를 받고 2개를 더 받았습니다. 모두 몇 개인가요?`,
+      question: `놀이 ${context.difficulty}에서 사탕 ${base}개를 받고 2개를 더 받았습니다. 모두 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: base + 2,
       explanation: `${base} + 2 = ${base + 2}입니다.`,
       topic: '생활 문제',
     },
     {
-      question: `${context.tierLabel} 숫자 길에서 ${base + 3} 바로 앞의 수는 ${base + 2}입니다.`,
+      question: `숫자 길 ${context.difficulty}에서 ${base + 3} 바로 앞의 수는 ${base + 2}입니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: `${base + 3}보다 1 작은 수는 ${base + 2}입니다.`,
       topic: '참거짓',
     },
     {
-      question: `${context.tierLabel} ${sum}번 도형 카드에서 변이 3개인 도형은 무엇인가요?`,
+      question: `${context.difficulty}번 도형 카드에서 변이 3개인 도형은 무엇인가요?`,
       answerMode: 'multipleChoice',
       answer: '삼각형',
       choices: ['삼각형', '사각형', '원', '육각형'],
@@ -249,7 +249,7 @@ function elementaryDrafts(context: BuildContext): QuestionDraft[] {
       topic: '나눗셈',
     },
     {
-      question: `${context.tierLabel} 분수판을 똑같이 ${denominator}칸으로 나눈 것 중 1칸은?`,
+      question: `분수판 ${context.difficulty}번을 똑같이 ${denominator}칸으로 나눈 것 중 1칸은?`,
       answerMode: 'multipleChoice',
       answer: `1/${denominator}`,
       choices: [
@@ -276,7 +276,7 @@ function elementaryDrafts(context: BuildContext): QuestionDraft[] {
       topic: '도형',
     },
     {
-      question: `${context.tierLabel} 간식 봉지에 ${b}개씩 든 과자가 ${context.stageNumber + 2}개 있습니다. 모두 몇 개인가요?`,
+      question: `간식 봉지 ${context.difficulty}번에는 ${b}개씩 든 과자가 ${context.stageNumber + 2}개 있습니다. 모두 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: b * (context.stageNumber + 2),
       explanation: `${b} x ${context.stageNumber + 2} = ${b * (context.stageNumber + 2)}입니다.`,
@@ -640,7 +640,7 @@ function bonusDrafts(context: BuildContext): QuestionDraft[] {
       topic: '역추론',
     },
     {
-      question: '보너스 보스: 증명에서 반례 하나는 보편 명제를 깨뜨릴 수 있습니다.',
+      question: '증명 난제: 반례 하나는 보편 명제를 깨뜨릴 수 있습니다.',
       answerMode: 'trueFalse',
       answer: true,
       explanation: '모든 경우에 대한 명제는 반례 하나로 거짓임을 보일 수 있습니다.',
