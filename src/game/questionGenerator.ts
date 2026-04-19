@@ -144,34 +144,34 @@ function finalizeQuestion(
 }
 
 function earlyDrafts(context: BuildContext): QuestionDraft[] {
-  const base = context.stageNumber + context.tierNumber;
+  const base = (context.tierNumber - 1) * 10 + context.stageNumber + 1;
   const next = base + 1;
   const sum = base + 2;
 
   return [
     {
-      question: `바구니 ${context.difficulty}에 ${base}개와 1개를 합치면 몇 개인가요?`,
+      question: `바구니에 ${base}개와 1개를 합치면 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: next,
       explanation: `${base} 다음 수는 ${next}입니다.`,
       topic: '수 세기',
     },
     {
-      question: `접시 ${context.difficulty}에 있는 ${sum}개 중 1개를 빼면 몇 개인가요?`,
+      question: `접시에 있는 ${sum}개 중 1개를 빼면 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: sum - 1,
       explanation: `${sum}에서 1을 빼면 ${sum - 1}입니다.`,
       topic: '빼기 감각',
     },
     {
-      question: `숫자 카드 ${context.difficulty}에서 ${next}은 ${base}보다 큽니다.`,
+      question: `숫자 카드에서 ${next}은 ${base}보다 큽니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: `${next}은 ${base}보다 1 큰 수입니다.`,
       topic: '크기 비교',
     },
     {
-      question: `${context.difficulty}번 그림판에서 동그라미처럼 모서리가 없는 도형은 무엇인가요?`,
+      question: `${base}번 그림판에서 동그라미처럼 모서리가 없는 도형은 무엇인가요?`,
       answerMode: 'multipleChoice',
       answer: '원',
       choices: ['원', '삼각형', '사각형', '별'],
@@ -179,28 +179,28 @@ function earlyDrafts(context: BuildContext): QuestionDraft[] {
       topic: '모양',
     },
     {
-      question: `규칙 카드 ${context.difficulty}: ${base}, ${next}, ?`,
+      question: `규칙 카드: ${base}, ${next}, ?`,
       answerMode: 'multipleChoice',
       answer: next + 1,
       explanation: '1씩 커지는 순서입니다.',
       topic: '규칙',
     },
     {
-      question: `놀이 ${context.difficulty}에서 사탕 ${base}개를 받고 2개를 더 받았습니다. 모두 몇 개인가요?`,
+      question: `놀이에서 사탕 ${base}개를 받고 2개를 더 받았습니다. 모두 몇 개인가요?`,
       answerMode: 'multipleChoice',
       answer: base + 2,
       explanation: `${base} + 2 = ${base + 2}입니다.`,
       topic: '생활 문제',
     },
     {
-      question: `숫자 길 ${context.difficulty}에서 ${base + 3} 바로 앞의 수는 ${base + 2}입니다.`,
+      question: `숫자 길에서 ${base + 3} 바로 앞의 수는 ${base + 2}입니다.`,
       answerMode: 'trueFalse',
       answer: true,
       explanation: `${base + 3}보다 1 작은 수는 ${base + 2}입니다.`,
       topic: '참거짓',
     },
     {
-      question: `${context.difficulty}번 도형 카드에서 변이 3개인 도형은 무엇인가요?`,
+      question: `${sum}번 도형 카드에서 변이 3개인 도형은 무엇인가요?`,
       answerMode: 'multipleChoice',
       answer: '삼각형',
       choices: ['삼각형', '사각형', '원', '육각형'],
@@ -211,13 +211,15 @@ function earlyDrafts(context: BuildContext): QuestionDraft[] {
 }
 
 function elementaryDrafts(context: BuildContext): QuestionDraft[] {
-  const a = context.tierNumber + context.stageNumber + 4;
+  const tierOffset = (context.tierNumber - 4) * 10;
+  const a = tierOffset + context.stageNumber + 8;
   const b = Math.max(2, context.stageNumber + 2);
   const product = a * b;
   const divisor = b;
-  const quotient = context.tierNumber + context.stageNumber + 3;
-  const denominator = context.tierNumber + context.stageNumber + 2;
+  const quotient = tierOffset + context.stageNumber + 7;
+  const denominator = tierOffset + context.stageNumber + 6;
   const sequenceStep = context.tierNumber - 1;
+  const snackBagCount = tierOffset + context.stageNumber + 2;
 
   return [
     {
@@ -249,7 +251,7 @@ function elementaryDrafts(context: BuildContext): QuestionDraft[] {
       topic: '나눗셈',
     },
     {
-      question: `분수판 ${context.difficulty}번을 똑같이 ${denominator}칸으로 나눈 것 중 1칸은?`,
+      question: `분수판을 똑같이 ${denominator}칸으로 나눈 것 중 1칸은?`,
       answerMode: 'multipleChoice',
       answer: `1/${denominator}`,
       choices: [
@@ -276,10 +278,10 @@ function elementaryDrafts(context: BuildContext): QuestionDraft[] {
       topic: '도형',
     },
     {
-      question: `간식 봉지 ${context.difficulty}번에는 ${b}개씩 든 과자가 ${context.stageNumber + 2}개 있습니다. 모두 몇 개인가요?`,
+      question: `간식 봉지에는 ${b}개씩 든 과자가 ${snackBagCount}개 있습니다. 모두 몇 개인가요?`,
       answerMode: 'multipleChoice',
-      answer: b * (context.stageNumber + 2),
-      explanation: `${b} x ${context.stageNumber + 2} = ${b * (context.stageNumber + 2)}입니다.`,
+      answer: b * snackBagCount,
+      explanation: `${b} x ${snackBagCount} = ${b * snackBagCount}입니다.`,
       topic: '문장제',
     },
   ];
